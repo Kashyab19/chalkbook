@@ -1,0 +1,13 @@
+{
+  "serviceId": "df7a7c48-2b51-48cd-8b0a-b9cb57d9c5b9",
+  "environmentId": "47a215ad-1ae8-45c1-9436-e7b45c59af6a",
+  "input": {
+    "dockerfilePath": "Dockerfile",
+    "healthcheckPath": "/api/health",
+    "healthcheckTimeout": 120,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3,
+    "numReplicas": 1,
+    "sleepApplication": false
+  }
+}

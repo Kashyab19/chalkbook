@@ -1,0 +1,43 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gym-notebook",
+  "main": "dist/server/index.js",
+  "compatibility_date": "2026-05-15",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    {
+      "pattern": "os.kashyab.xyz",
+      "custom_domain": true
+    }
+  ],
+  "assets": {
+    "directory": "dist/client"
+  },
+  "vars": {
+    "GYM_AUTH_MODE": "standalone"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "gym-notebook",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "LOGIN_LIMITER",
+      "namespace_id": "810732",
+      "simple": {
+        "limit": 5,
+        "period": 60
+      }
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

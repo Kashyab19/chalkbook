@@ -1,0 +1,14 @@
+.git
+node_modules
+.pnpm-store
+.env*
+.dev.vars*
+.wrangler
+dist
+outputs
+work
+*.tsbuildinfo
+
+build
+
+boardui-preview

@@ -1,0 +1,10 @@
+import { readFile, writeFile } from 'node:fs/promises';
+const build=JSON.parse(await readFile('dist/server/wrangler.json','utf8'));
+const deploy=JSON.parse(await readFile('wrangler.standalone.json','utf8'));
+if(!process.env.GYM_CF_ACCOUNT_ID || !process.env.GYM_CF_DATABASE_ID) throw Error('Set the verified GYM_CF_ACCOUNT_ID and GYM_CF_DATABASE_ID before preparing a Cloudflare deployment.');
+deploy.account_id=process.env.GYM_CF_ACCOUNT_ID;
+deploy.d1_databases[0].database_id=process.env.GYM_CF_DATABASE_ID;
+const config={...build,...deploy,main:'index.js',assets:{directory:'../client'},d1_databases:deploy.d1_databases.map(db=>({...db,migrations_dir:'../../drizzle'}))};
+delete config.$schema;
+await writeFile('dist/server/standalone.json',JSON.stringify(config,null,2)+'\n');
+console.log('Standalone Cloudflare deployment prepared. Sites is not in the runtime path.');

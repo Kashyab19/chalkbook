@@ -36,3 +36,10 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+.dev.vars*
+*.tsbuildinfo
+
+.pnpm-store/
+
+/build/

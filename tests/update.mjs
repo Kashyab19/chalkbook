@@ -1,0 +1,31 @@
+import {strict as assert} from 'node:assert';
+import {readFile,writeFile,mkdtemp} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'/Users/nikash/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs');
+const profile=await mkdtemp(join(tmpdir(),'gym-update-'));
+const launch=offline=>chromium.launchPersistentContext(profile,{headless:true,executablePath:process.env.GYM_BROWSER_EXECUTABLE||'/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',timezoneId:'America/New_York',viewport:{width:390,height:844},offline});
+let context=await launch(false),page=context.pages()[0];
+const file=process.env.GYM_SW_PATH||'dist/client/sw.js',original=await readFile(file,'utf8');
+const wait=async(fn)=>{for(let i=0;i<150;i++){if(await fn())return;await new Promise(r=>setTimeout(r,100));}throw Error('Condition timed out')};
+const snap=()=>page.evaluate(()=>new Promise(resolve=>{const r=indexedDB.open(localStorage.getItem('gym-owner')?'gym-notebook-'+localStorage.getItem('gym-owner'):'gym-notebook');r.onsuccess=()=>{const d=r.result;const q=d.transaction('notebook').objectStore('notebook').get('state');q.onsuccess=()=>{resolve(q.result);d.close()}}}));
+try {
+ await page.goto(process.env.GYM_TEST_URL||'http://localhost:4173');if(process.env.GYM_TEST_PASSWORD){await page.getByLabel('Account name',{exact:true}).first().fill(process.env.GYM_TEST_USERNAME||'test-owner');await page.getByLabel('Password',{exact:true}).first().fill(process.env.GYM_TEST_PASSWORD);await page.getByRole('button',{name:'Sign in',exact:true}).first().click();}await page.getByRole('heading',{name:'Legs',exact:true}).waitFor();
+ await wait(async()=> (await snap()).pending.length===0);
+ await page.evaluate(()=>navigator.serviceWorker.ready);await wait(()=>page.evaluate(()=>!!navigator.serviceWorker.controller));
+ await context.route('**/api/log',r=>r.abort());
+ await page.getByRole('spinbutton',{name:'Back Squat set 1 weight',exact:true}).fill('77');
+ await wait(async()=> (await snap()).pending.length>0);
+ const before=await snap();const htmlBefore=await page.getByRole('spinbutton',{name:'Back Squat set 1 weight',exact:true}).inputValue();
+ await writeFile(file,original.replace(/gym-shell-([a-f0-9]+)/,'gym-shell-$1-update-test'));
+ await page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();await r.update()});
+ await wait(()=>page.evaluate(async()=>!!(await navigator.serviceWorker.getRegistration())?.waiting));
+ assert.equal(await page.getByRole('spinbutton',{name:'Back Squat set 1 weight',exact:true}).inputValue(),htmlBefore);
+ assert.equal(await page.evaluate(()=>document.visibilityState),'visible');
+ console.log('PASS new worker waits without reloading an active logging screen');
+ await context.close();context=await launch(true);page=context.pages()[0];
+ await page.goto(process.env.GYM_TEST_URL||'http://localhost:4173');await page.getByRole('heading',{name:'Legs',exact:true}).waitFor();
+ assert.deepEqual((await snap()).data,before.data);assert.equal((await snap()).pending.length,before.pending.length);
+ assert.ok((await page.evaluate(()=>caches.keys())).some(k=>k.endsWith('-update-test')));
+ console.log('PASS updated shell activates after closure and preserves unsynced changes offline');
+}finally{await context.close();await writeFile(file,original)}

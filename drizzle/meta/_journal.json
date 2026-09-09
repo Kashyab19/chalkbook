@@ -8,6 +8,13 @@
       "when": 1788654000302,
       "tag": "0000_stormy_magus",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1788820531751,
+      "tag": "0001_add_sync_operations",
+      "breakpoints": true
     }
   ]
 }
