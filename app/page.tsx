@@ -300,17 +300,14 @@ export default function Home() {
         {(notebook.error || notebook.localError) && (
           <div className="error" role="alert">
             {notebook.localError || notebook.error}
-            <button
-              onClick={() => {
-                if (notebook.error.startsWith('Sign in online')) {
-                  location.reload();
-                  return;
-                }
-                void notebook.sync();
-              }}
-            >
-              Retry
-            </button>
+            {!notebook.error.startsWith('Sign in online') && (
+              <button onClick={() => void notebook.sync()}>Retry</button>
+            )}
+            {notebook.error.startsWith('Sign in online') && (
+              <div className="reauth-card">
+                <SignIn onSuccess={notebook.sync} />
+              </div>
+            )}
           </div>
         )}
         <BoardTabPanel id="today">
