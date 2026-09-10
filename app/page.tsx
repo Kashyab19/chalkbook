@@ -267,7 +267,13 @@ export default function Home() {
           <button
             className="text-button danger"
             onClick={async () => {
-              await fetch('/api/auth', { method: 'DELETE' });
+              await fetch('/api/auth', {
+                method: 'DELETE',
+                credentials: 'same-origin',
+              });
+              try {
+                localStorage.removeItem('gym-owner');
+              } catch {}
               location.reload();
             }}
           >
@@ -294,7 +300,17 @@ export default function Home() {
         {(notebook.error || notebook.localError) && (
           <div className="error" role="alert">
             {notebook.localError || notebook.error}
-            <button onClick={() => void notebook.sync()}>Retry</button>
+            <button
+              onClick={() => {
+                if (notebook.error.startsWith('Sign in online')) {
+                  location.reload();
+                  return;
+                }
+                void notebook.sync();
+              }}
+            >
+              Retry
+            </button>
           </div>
         )}
         <BoardTabPanel id="today">

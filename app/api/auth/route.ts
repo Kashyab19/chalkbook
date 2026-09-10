@@ -1,5 +1,20 @@
 import { env } from 'cloudflare:workers';
 import { signIn } from '@/lib/server-auth';
+
+export async function DELETE(request: Request) {
+  if (request.headers.get('origin') !== new URL(request.url).origin)
+    return new Response('Invalid origin', { status: 403 });
+  return Response.json(
+    { ok: true },
+    {
+      headers: {
+        'Cache-Control': 'no-store',
+        'Set-Cookie':
+          'gym_session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0',
+      },
+    },
+  );
+}
 export async function POST(request: Request) {
   if (request.headers.get('origin') !== new URL(request.url).origin)
     return new Response('Invalid origin', { status: 403 });
