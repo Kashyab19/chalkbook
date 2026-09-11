@@ -23,6 +23,7 @@ import { History } from '@/components/gym/history';
 import { Program } from '@/components/gym/program';
 import {
   days,
+  defaultProgram,
   dateKey,
   dateLabel,
   display,
@@ -30,6 +31,7 @@ import {
   previous,
   newSession,
   target,
+  weekParity,
   type Data,
   type SetLog,
 } from '@/lib/training';
@@ -102,8 +104,23 @@ export default function Home() {
         )
       : undefined) ||
     scheduled;
+  const workoutDay =
+    day?.id === 'pull' && date
+      ? {
+          ...day,
+          exercises:
+            weekParity(date).week % 2
+              ? day.exercises
+              : [
+                  day.exercises[0],
+                  day.exercises[1],
+                  { id: 't-bar-row', name: 'T-Bar Row', sets: 3, min: 8, max: 12 },
+                  ...day.exercises.slice(3),
+                ],
+        }
+      : day;
   const session = data.sessions.find(
-    (s) => s.date === date && s.templateId === day?.id,
+    (s) => s.date === date && s.templateId === workoutDay?.id,
   );
   // Keep the default split aligned with the user's requested recovery pattern.
   // Existing notebooks created before this change are migrated once and synced.
@@ -112,13 +129,23 @@ export default function Home() {
     if (scheduleMigrated.current || !loaded || !data.program.length) return;
     const upper = data.program.find((d) => d.id === 'upper');
     const lower = data.program.find((d) => d.id === 'lower');
-    if (upper?.day === 4 && lower?.day === 5) {
+    const needsProgramUpdate =
+      upper?.day === 4 ||
+      lower?.day === 5 ||
+      data.program.find((d) => d.id === 'legs')?.name !== 'Hamstrings & Glutes' ||
+      data.program.find((d) => d.id === 'lower')?.name !== 'Glutes & Quads';
+    if (needsProgramUpdate) {
       scheduleMigrated.current = true;
       void save({
         type: 'program',
-        program: data.program.map((d) =>
-          d.id === 'upper' ? { ...d, day: 5 } : d.id === 'lower' ? { ...d, day: 4 } : d,
-        ),
+        program: data.program.map((d) => {
+          const desired = defaultProgram.find((next) => next.id === d.id);
+          return desired && ['legs', 'push', 'pull', 'lower'].includes(d.id)
+            ? { ...desired }
+            : d.id === 'upper'
+              ? { ...d, day: 5 }
+              : d;
+        }),
       });
     } else {
       scheduleMigrated.current = true;
@@ -130,18 +157,18 @@ export default function Home() {
       tab !== 'today' ||
       !loaded ||
       !date ||
-      !day?.exercises.length ||
+      !workoutDay?.exercises.length ||
       session
     )
       return;
-    const id = `${date}_${day.id}`;
+    const id = `${date}_${workoutDay.id}`;
     if (starting.current === id) return;
     starting.current = id;
-    const draft = newSession(date, day, data.sessions);
+    const draft = newSession(date, workoutDay, data.sessions);
     void save({ type: 'start', session: draft }).finally(() => {
       starting.current = '';
     });
-  }, [loaded, date, day, session, tab, save, data.sessions]);
+  }, [loaded, date, workoutDay, session, tab, save, data.sessions]);
   useEffect(() => {
     type ToolContext = {
       registerTool: (
@@ -328,7 +355,10 @@ export default function Home() {
         )}
         <BoardTabPanel id="today">
           <div className="board-workout-heading">
-            <h1>{day?.name || 'Today'}</h1>
+            <h1>{workoutDay?.name || 'Today'}</h1>
+            {workoutDay?.id === 'pull' && date && (
+              <p className="muted small">{weekParity(date).label} · week {weekParity(date).week}</p>
+            )}
             <label className="date-label">
               <span className="sr-only">Workout date</span>
               <input
@@ -355,7 +385,7 @@ export default function Home() {
             />
           ) : (
             <p className="muted">
-              {day?.exercises.length ? 'Loading workout…' : 'Rest day'}
+              {workoutDay?.exercises.length ? 'Loading workout…' : 'Rest day'}
             </p>
           )}
         </BoardTabPanel>

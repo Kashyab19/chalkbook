@@ -51,6 +51,17 @@ export function dateLabel(s: string) {
     day: 'numeric',
   });
 }
+export function isoWeekNumber(s: string) {
+  const date = new Date(s + 'T12:00:00');
+  const day = date.getDay() || 7;
+  date.setDate(date.getDate() + 4 - day);
+  const yearStart = new Date(date.getFullYear(), 0, 1);
+  return Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+export function weekParity(s: string) {
+  const week = isoWeekNumber(s);
+  return { week, label: week % 2 ? 'Odd week' : 'Even week' } as const;
+}
 const e = (name: string, sets: number, min: number, max: number): Exercise => ({
   id: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
   name,
@@ -62,12 +73,12 @@ export const defaultProgram: Day[] = [
   {
     id: 'legs',
     day: 1,
-    name: 'Legs',
+    name: 'Hamstrings & Glutes',
     exercises: [
       e('Back Squat', 3, 5, 8),
-      e('Romanian Deadlift', 3, 6, 10),
-      e('Leg Press', 3, 8, 12),
+      e('Glute Bridge (heavy · 8-8-8)', 3, 8, 8),
       e('Leg Curl', 3, 10, 15),
+      e('Abductors', 3, 12, 20),
       e('Calf Raise', 3, 12, 20),
     ],
   },
@@ -76,11 +87,13 @@ export const defaultProgram: Day[] = [
     day: 2,
     name: 'Push',
     exercises: [
-      e('Bench Press', 3, 5, 8),
+      e('Chest Press', 3, 6, 10),
       e('Incline Dumbbell Press', 3, 8, 12),
       e('Overhead Press', 3, 6, 10),
       e('Lateral Raise', 3, 12, 20),
-      e('Triceps Pushdown', 3, 10, 15),
+      e('Face Pull', 3, 12, 20),
+      e('Tricep Pushdown (V bar)', 3, 10, 15),
+      e('Tricep Extension', 3, 10, 15),
     ],
   },
   {
@@ -88,12 +101,11 @@ export const defaultProgram: Day[] = [
     day: 3,
     name: 'Pull',
     exercises: [
-      e('Pull-up / Lat Pulldown', 3, 6, 10),
+      e('Lat Pulldown', 3, 8, 12),
       e('Chest-Supported Row', 3, 6, 10),
-      e('Cable Row', 3, 10, 15),
-      e('Face Pull / Rear Delt Fly', 3, 12, 20),
-      e('Biceps Curl', 3, 8, 12),
-      e('Hammer Curl', 2, 10, 15),
+      e('Rear Delt Fly', 3, 12, 20),
+      e('Preacher Curl', 3, 8, 12),
+      e('Hammer Curl', 3, 10, 15),
     ],
   },
   {
@@ -112,13 +124,13 @@ export const defaultProgram: Day[] = [
   {
     id: 'lower',
     day: 4,
-    name: 'Lower',
+    name: 'Glutes & Quads',
     exercises: [
       e('Romanian Deadlift', 3, 6, 10),
-      e('Leg Press', 3, 8, 12),
+      e('Leg Press', 2, 8, 12),
+      e('Leg Extension', 3, 10, 15),
       e('Bulgarian Split Squat', 3, 8, 12),
-      e('Leg Curl', 3, 10, 15),
-      e('Leg Extension', 2, 12, 15),
+      e('Adductors', 3, 12, 20),
       e('Calf Raise', 3, 12, 20),
     ],
   },
