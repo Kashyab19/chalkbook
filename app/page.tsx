@@ -271,9 +271,6 @@ export default function Home() {
                 method: 'DELETE',
                 credentials: 'same-origin',
               });
-              try {
-                localStorage.removeItem('gym-owner');
-              } catch {}
               location.reload();
             }}
           >
