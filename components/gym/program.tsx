@@ -71,9 +71,14 @@ export function Program({
     setError('');
   }
   return (
-    <section>
-      <p className="eyebrow">YOUR WEEK, YOUR WAY</p>
-      <h1>Training plan</h1>
+    <section className="training-plan">
+      <div className="program-intro">
+        <div>
+          <p className="eyebrow">YOUR WEEK</p>
+          <h1>Training plan</h1>
+        </div>
+        <p className="muted small">Tap a day to edit its exercises.</p>
+      </div>
       <div className="program-days">
         {program.map((d) => (
           <button
@@ -92,6 +97,7 @@ export function Program({
       </div>
       <div className="row-between program-heading">
         <div>
+          <p className="program-kicker">DAY PLAN</p>
           <h2>
             {days[day.day]} · {day.name}
           </h2>
@@ -101,6 +107,12 @@ export function Program({
         </div>
       </div>
       <div className="paper program-list">
+        {!!day.exercises.length && (
+          <div className="program-list-header">
+            <span>Exercises</span>
+            <span>{day.exercises.length} total</span>
+          </div>
+        )}
         {day.exercises.map((e, i) => (
           <div className="program-exercise" key={e.id}>
             <span className="exercise-number">
