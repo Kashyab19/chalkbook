@@ -105,6 +105,25 @@ export default function Home() {
   const session = data.sessions.find(
     (s) => s.date === date && s.templateId === day?.id,
   );
+  // Keep the default split aligned with the user's requested recovery pattern.
+  // Existing notebooks created before this change are migrated once and synced.
+  const scheduleMigrated = useRef(false);
+  useEffect(() => {
+    if (scheduleMigrated.current || !loaded || !data.program.length) return;
+    const upper = data.program.find((d) => d.id === 'upper');
+    const lower = data.program.find((d) => d.id === 'lower');
+    if (upper?.day === 4 && lower?.day === 5) {
+      scheduleMigrated.current = true;
+      void save({
+        type: 'program',
+        program: data.program.map((d) =>
+          d.id === 'upper' ? { ...d, day: 5 } : d.id === 'lower' ? { ...d, day: 4 } : d,
+        ),
+      });
+    } else {
+      scheduleMigrated.current = true;
+    }
+  }, [data.program, loaded, save]);
   const starting = useRef('');
   useEffect(() => {
     if (

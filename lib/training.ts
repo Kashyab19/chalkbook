@@ -98,7 +98,7 @@ export const defaultProgram: Day[] = [
   },
   {
     id: 'upper',
-    day: 4,
+    day: 5,
     name: 'Upper',
     exercises: [
       e('Incline Dumbbell Press', 3, 8, 12),
@@ -111,7 +111,7 @@ export const defaultProgram: Day[] = [
   },
   {
     id: 'lower',
-    day: 5,
+    day: 4,
     name: 'Lower',
     exercises: [
       e('Romanian Deadlift', 3, 6, 10),
