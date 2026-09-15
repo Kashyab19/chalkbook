@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/boardui/base/buttons/button';
 import { Input } from '@/components/boardui/base/input/input';
-import { RiAddLine, RiCheckLine } from '@remixicon/react';
+import { RiAddLine, RiChat1Line, RiCheckLine } from '@remixicon/react';
 import {
   type Session,
   type SetLog,
@@ -35,7 +35,8 @@ export function BoardWorkout({
       set: number;
       value: SetLog;
     } | null>(null),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [noteOpen, setNoteOpen] = useState<string | null>(null);
   const [until, setUntil] = useDeviceDraft<number>(`rest-${session.id}`, 0);
   const lock = useRef(false);
   const run = async (action: Action, after?: () => void) => {
@@ -169,19 +170,22 @@ export function BoardWorkout({
                     <span>Reps</span>
                     <span>Done</span>
                   </div>
-                  {ex.entries.map((s, i) => (
-                    <div
-                      id={`set-${j}-${i}`}
-                      key={i}
-                      className={cx(
-                        'workout-grid my-2 rounded-xl',
-                        s.completed && 'bg-background-secondary-default',
-                        j === nextJ &&
-                          i === nextI &&
-                          !finished &&
-                          'current-set',
-                      )}
-                    >
+                  {ex.entries.map((s, i) => {
+                    const noteKey = `${j}-${i}`;
+                    return (
+                      <div
+                        id={`set-${j}-${i}`}
+                        key={i}
+                        className={cx(
+                          'my-2 rounded-xl',
+                          s.completed && 'bg-background-secondary-default',
+                          j === nextJ &&
+                            i === nextI &&
+                            !finished &&
+                            'current-set',
+                        )}
+                      >
+                        <div className="workout-grid">
                       <span className="text-body-medium text-center">
                         {i + 1}
                         {i >= ex.sets && (
@@ -246,8 +250,50 @@ export function BoardWorkout({
                         }
                         onClick={() => mark(j, i)}
                       />
-                    </div>
-                  ))}
+                        </div>
+                        <div className="ml-10 flex items-center gap-1">
+                          <Button
+                            iconOnly
+                            variant="ghost"
+                            leadingIcon={RiChat1Line}
+                            className="min-h-9 min-w-9"
+                            aria-label={`${s.note ? 'Edit' : 'Add'} note for ${ex.name} set ${i + 1}`}
+                            aria-expanded={noteOpen === noteKey}
+                            onClick={() =>
+                              setNoteOpen((open) =>
+                                open === noteKey ? null : noteKey,
+                              )
+                            }
+                          />
+                          {s.note && noteOpen !== noteKey && (
+                            <span className="truncate text-caption-1-regular text-text-secondary">
+                              {s.note}
+                            </span>
+                          )}
+                        </div>
+                        {noteOpen === noteKey && (
+                          <SetNote
+                            key={`${session.id}-${noteKey}-${s.note ?? ''}`}
+                            exercise={ex.name}
+                            set={i + 1}
+                            note={s.note ?? ''}
+                            disabled={busy || saving}
+                            onSave={async (note) => {
+                              const saved = await save({
+                                type: 'set',
+                                id: session.id,
+                                exercise: j,
+                                set: i,
+                                value: { ...s, note: note || undefined },
+                              });
+                              if (saved) setNoteOpen(null);
+                              return saved;
+                            }}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
               {!finished && (
@@ -360,6 +406,56 @@ export function BoardWorkout({
           )}
         </div>
       )}
+    </div>
+  );
+}
+function SetNote({
+  exercise,
+  set,
+  note,
+  disabled,
+  onSave,
+}: {
+  exercise: string;
+  set: number;
+  note: string;
+  disabled: boolean;
+  onSave: (note: string) => Promise<boolean>;
+}) {
+  const [draft, setDraft] = useState(note);
+  const [saving, setSaving] = useState(false);
+  const saveNote = async () => {
+    if (saving || draft === note) return;
+    setSaving(true);
+    try {
+      await onSave(draft.trim());
+    } finally {
+      setSaving(false);
+    }
+  };
+  return (
+    <div className="set-note ml-10 mt-1">
+      <label className="sr-only" htmlFor={`set-note-${exercise}-${set}`}>
+        How {exercise} set {set} felt
+      </label>
+      <textarea
+        id={`set-note-${exercise}-${set}`}
+        value={draft}
+        maxLength={1000}
+        rows={2}
+        disabled={disabled || saving}
+        placeholder="How did that set feel?"
+        onChange={(event) => setDraft(event.target.value)}
+        onBlur={() => void saveNote()}
+      />
+      <Button
+        variant="secondary"
+        disabled={disabled || saving || draft === note}
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => void saveNote()}
+      >
+        Save note
+      </Button>
     </div>
   );
 }

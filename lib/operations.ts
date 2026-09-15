@@ -144,6 +144,7 @@ export function validSet(v: unknown): v is SetLog {
     (v.weightKg === null || num(v.weightKg, 0, 2000)) &&
     (v.reps === null || num(v.reps, 0, 500, true)) &&
     typeof v.completed === 'boolean' &&
+    (v.note === undefined || (typeof v.note === 'string' && v.note.length <= 1000)) &&
     (!v.completed || (num(v.weightKg, 0, 2000) && num(v.reps, 1, 500, true)))
   );
 }

@@ -2,6 +2,8 @@ export type SetLog = {
   weightKg: number | null;
   reps: number | null;
   completed: boolean;
+  /** A brief, optional observation recorded immediately after this set. */
+  note?: string;
 };
 export type Exercise = {
   id: string;

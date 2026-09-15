@@ -80,6 +80,27 @@ void test('unit conversion keeps canonical kg and suggestions do not change weig
   assert.equal(s.increase, true);
   assert.deepEqual(s.entries, entries);
 });
+void test('set notes are retained in workout records and backups', () => {
+  const session = newSession('2026-09-07', defaultProgram[0], []);
+  let data = applyAction(blank(), { type: 'start', session });
+  const action = {
+    type: 'set' as const,
+    id: session.id,
+    exercise: 0,
+    set: 0,
+    value: { weightKg: 20, reps: 8, completed: true, note: 'Felt strong' },
+  };
+  validateAction(action);
+  data = applyAction(data, action);
+  assert.equal(data.sessions[0].exercises[0].entries[0].note, 'Felt strong');
+  assert.deepEqual(
+    parseBackup({ format: 'gym-notebook', version: 1, data }),
+    data,
+  );
+  assert.throws(() =>
+    validateAction({ ...action, value: { ...action.value, note: 'x'.repeat(1001) } }),
+  );
+});
 void test('backup validation preserves records and rejects malformed data', () => {
   const d = applyAction(blank(), {
     type: 'start',

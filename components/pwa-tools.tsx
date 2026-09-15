@@ -38,9 +38,11 @@ export function PwaTools({ data, pending, save, sync, open = false }: Props) {
     viewport?.addEventListener('resize', resize);
     viewport?.addEventListener('scroll', resize);
     if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
-      const hadController = !!navigator.serviceWorker.controller;
       controllerChanged = () => {
-        if (hadController) location.reload();
+        // A service worker can take control when an installed app returns from
+        // the background. Reloading here discarded the active screen on unlock.
+        // The new shell is used on the next normal launch instead.
+        setUpdate(false);
       };
       navigator.serviceWorker.addEventListener(
         'controllerchange',

@@ -257,10 +257,37 @@ html.dark .workout-card {
   padding: 0.25rem;
   scroll-margin-bottom: 180px;
 }
+.set-note {
+  display: flex;
+  align-items: end;
+  gap: 0.5rem;
+}
+.set-note textarea {
+  width: min(100%, 30rem);
+  min-height: 3.25rem;
+  resize: vertical;
+  border: 1px solid var(--color-border-button-default);
+  border-radius: 0.75rem;
+  background: var(--color-background-primary-default);
+  color: var(--color-text-primary);
+  padding: 0.5rem 0.625rem;
+  font: inherit;
+}
+.set-note textarea:focus-visible {
+  outline: 2px solid var(--color-accent-400);
+  outline-offset: 2px;
+}
 .workout-grid.current-set {
   background: var(--color-accent-50);
 }
+.current-set {
+  background: var(--color-accent-50);
+}
 html.dark .workout-grid.current-set {
+  background: color-mix(in srgb, var(--color-accent-500) 18%, #292929);
+  box-shadow: inset 3px 0 0 var(--color-accent-400);
+}
+html.dark .current-set {
   background: color-mix(in srgb, var(--color-accent-500) 18%, #292929);
   box-shadow: inset 3px 0 0 var(--color-accent-400);
 }
@@ -526,6 +553,9 @@ html.dark .sign-in-submit {
   }
   .boardui .workout-grid input {
     padding-inline: 4px;
+  }
+  .set-note {
+    margin-left: 1.75rem;
   }
 }
 
