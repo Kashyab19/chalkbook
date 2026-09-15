@@ -230,6 +230,8 @@ export default function Home() {
     ).catch(() => {});
     return () => controller.abort();
   }, [save]);
+  if (notebook.initializing)
+    return <NotebookLoading />;
   if (!loaded)
     return (
       <main className="auth-page">
@@ -428,6 +430,21 @@ export default function Home() {
         sync={notebook.sync}
         open={settingsOpen}
       />
+    </main>
+  );
+}
+function NotebookLoading() {
+  return (
+    <main className="notebook-loading" aria-busy="true" aria-live="polite">
+      <div className="loading-mark" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+      </div>
+      <div>
+        <strong>Gym Notebook</strong>
+        <p>Opening your training log</p>
+      </div>
     </main>
   );
 }

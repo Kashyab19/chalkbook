@@ -36,6 +36,16 @@ output { display: block; }
 
 /* Private sign-in entry, separate from workout navigation. */
 .auth-page { min-height: calc(100dvh - env(safe-area-inset-top)); max-width: 1120px; margin: auto; padding: 0 max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); display: flex; flex-direction: column; }
+.notebook-loading { min-height: calc(100dvh - env(safe-area-inset-top)); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; text-align: center; color: var(--foreground); }
+.notebook-loading strong { display: block; font-size: 22px; letter-spacing: -.7px; }
+.notebook-loading p { margin: 7px 0 0; color: var(--muted-foreground); font-size: 14px; }
+.loading-mark { display: flex; align-items: center; gap: 7px; height: 42px; }
+.loading-mark i { display: block; width: 7px; border-radius: 999px; background: var(--primary); animation: notebook-pulse 1s ease-in-out infinite; }
+.loading-mark i:nth-child(1) { height: 18px; animation-delay: -.2s; }
+.loading-mark i:nth-child(2) { height: 38px; }
+.loading-mark i:nth-child(3) { height: 25px; animation-delay: .2s; }
+@keyframes notebook-pulse { 50% { transform: scaleY(.55); opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .loading-mark i { animation: none; } }
 .auth-brand { display: flex; align-items: center; gap: 10px; min-height: 88px; color: #203c31; }
 .auth-brand strong { font-size: 18px; letter-spacing: -.5px; }
 .auth-content { width: 100%; max-width: 440px; margin: auto; padding: 32px 0; }

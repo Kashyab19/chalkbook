@@ -59,6 +59,7 @@ async function request(operation?: Operation): Promise<Data | { ok: boolean }> {
 }
 export function useNotebook() {
   const [snapshot, setSnapshot] = useState<Snapshot>();
+  const [initializing, setInitializing] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState('');
   const [localError, setLocalError] = useState('');
@@ -148,10 +149,17 @@ export function useNotebook() {
     [publish, sync],
   );
   useEffect(() => {
-    void transact()
-      .then(publish)
-      .then(() => sync())
-      .catch((e) => setLocalError(String(e)));
+    void (async () => {
+      try {
+        const snapshot = await transact();
+        publish(snapshot);
+        await sync();
+      } catch (e) {
+        setLocalError(String(e));
+      } finally {
+        setInitializing(false);
+      }
+    })();
     const foreground = () => {
       if (document.visibilityState === 'visible') {
         void sync();
@@ -186,6 +194,7 @@ export function useNotebook() {
   }, [publish, sync]);
   return {
     data: snapshot?.data,
+    initializing,
     save,
     sync,
     localError,
