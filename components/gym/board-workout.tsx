@@ -253,10 +253,9 @@ export function BoardWorkout({
                         </div>
                         <div className="ml-10 flex items-center gap-1">
                           <Button
-                            iconOnly
                             variant="ghost"
+                            size="small"
                             leadingIcon={RiChat1Line}
-                            className="min-h-9 min-w-9"
                             aria-label={`${s.note ? 'Edit' : 'Add'} note for ${ex.name} set ${i + 1}`}
                             aria-expanded={noteOpen === noteKey}
                             onClick={() =>
@@ -264,7 +263,9 @@ export function BoardWorkout({
                                 open === noteKey ? null : noteKey,
                               )
                             }
-                          />
+                          >
+                            {s.note ? 'Edit note' : 'Add note'}
+                          </Button>
                           {s.note && noteOpen !== noteKey && (
                             <span className="truncate text-caption-1-regular text-text-secondary">
                               {s.note}
