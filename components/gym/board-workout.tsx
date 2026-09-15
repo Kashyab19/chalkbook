@@ -36,7 +36,11 @@ export function BoardWorkout({
       value: SetLog;
     } | null>(null),
     [busy, setBusy] = useState(false),
-    [noteOpen, setNoteOpen] = useState<string | null>(null);
+    [noteTarget, setNoteTarget] = useState<{
+      exercise: number;
+      set: number;
+    } | null>(null),
+    [noteOpen, setNoteOpen] = useState(false);
   const [until, setUntil] = useDeviceDraft<number>(`rest-${session.id}`, 0);
   const lock = useRef(false);
   const run = async (action: Action, after?: () => void) => {
@@ -77,6 +81,8 @@ export function BoardWorkout({
       () => {
         if (!value.completed) {
           setUndo({ exercise: j, set: i, value });
+          setNoteTarget({ exercise: j, set: i });
+          setNoteOpen(false);
           setUntil(Date.now() + 90000);
           if (
             session.exercises[j].entries.every((s, k) => k === i || s.completed)
@@ -170,9 +176,7 @@ export function BoardWorkout({
                     <span>Reps</span>
                     <span>Done</span>
                   </div>
-                  {ex.entries.map((s, i) => {
-                    const noteKey = `${j}-${i}`;
-                    return (
+                  {ex.entries.map((s, i) => (
                       <div
                         id={`set-${j}-${i}`}
                         key={i}
@@ -251,50 +255,8 @@ export function BoardWorkout({
                         onClick={() => mark(j, i)}
                       />
                         </div>
-                        <div className="set-note-control">
-                          <Button
-                            variant="ghost"
-                            size="small"
-                            leadingIcon={RiChat1Line}
-                            aria-label={`${s.note ? 'Edit' : 'Add'} note for ${ex.name} set ${i + 1}`}
-                            aria-expanded={noteOpen === noteKey}
-                            onClick={() =>
-                              setNoteOpen((open) =>
-                                open === noteKey ? null : noteKey,
-                              )
-                            }
-                          >
-                            {s.note ? 'Edit note' : 'Add note'}
-                          </Button>
-                          {s.note && noteOpen !== noteKey && (
-                            <span className="truncate text-caption-1-regular text-text-secondary">
-                              {s.note}
-                            </span>
-                          )}
-                        </div>
-                        {noteOpen === noteKey && (
-                          <SetNote
-                            key={`${session.id}-${noteKey}-${s.note ?? ''}`}
-                            exercise={ex.name}
-                            set={i + 1}
-                            note={s.note ?? ''}
-                            disabled={busy || saving}
-                            onSave={async (note) => {
-                              const saved = await save({
-                                type: 'set',
-                                id: session.id,
-                                exercise: j,
-                                set: i,
-                                value: { ...s, note: note || undefined },
-                              });
-                              if (saved) setNoteOpen(null);
-                              return saved;
-                            }}
-                          />
-                        )}
                       </div>
-                    );
-                  })}
+                  ))}
                 </div>
               )}
               {!finished && (
@@ -399,7 +361,49 @@ export function BoardWorkout({
                 Undo
               </Button>
             )}
+            {noteTarget && (
+              <Button
+                variant="secondary"
+                leadingIcon={RiChat1Line}
+                disabled={busy || saving}
+                aria-expanded={noteOpen}
+                onClick={() => setNoteOpen((open) => !open)}
+              >
+                {session.exercises[noteTarget.exercise].entries[noteTarget.set]
+                  .note
+                  ? 'Edit note'
+                  : 'Note last set'}
+              </Button>
+            )}
           </div>
+          {noteTarget && noteOpen && (
+            <SetNote
+              key={`${session.id}-${noteTarget.exercise}-${noteTarget.set}-${session.exercises[noteTarget.exercise].entries[noteTarget.set].note ?? ''}`}
+              exercise={session.exercises[noteTarget.exercise].name}
+              set={noteTarget.set + 1}
+              note={
+                session.exercises[noteTarget.exercise].entries[noteTarget.set]
+                  .note ?? ''
+              }
+              disabled={busy || saving}
+              onSave={async (note) => {
+                const saved = await save({
+                  type: 'set',
+                  id: session.id,
+                  exercise: noteTarget.exercise,
+                  set: noteTarget.set,
+                  value: {
+                    ...session.exercises[noteTarget.exercise].entries[
+                      noteTarget.set
+                    ],
+                    note: note || undefined,
+                  },
+                });
+                if (saved) setNoteOpen(false);
+                return saved;
+              }}
+            />
+          )}
           {next && !validSet({ ...next, completed: true }) && (
             <p className="mt-2 text-caption-1-regular text-text-secondary">
               Enter weight and reps.
