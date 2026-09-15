@@ -251,7 +251,7 @@ export function BoardWorkout({
                         onClick={() => mark(j, i)}
                       />
                         </div>
-                        <div className="ml-10 flex items-center gap-1">
+                        <div className="set-note-control">
                           <Button
                             variant="ghost"
                             size="small"
@@ -435,7 +435,7 @@ function SetNote({
     }
   };
   return (
-    <div className="set-note ml-10 mt-1">
+    <div className="set-note">
       <label className="sr-only" htmlFor={`set-note-${exercise}-${set}`}>
         How {exercise} set {set} felt
       </label>

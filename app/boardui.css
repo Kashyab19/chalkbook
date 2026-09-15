@@ -257,12 +257,22 @@ html.dark .workout-card {
   padding: 0.25rem;
   scroll-margin-bottom: 180px;
 }
+.set-note-control,
 .set-note {
-  display: flex;
-  align-items: end;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr) minmax(0, 1fr) 2.75rem;
+  column-gap: 0.5rem;
+  padding: 0 0.25rem 0.25rem;
+}
+.set-note-control > * {
+  grid-column: 2 / -1;
+  justify-self: start;
+}
+.set-note {
+  row-gap: 0.5rem;
 }
 .set-note textarea {
+  grid-column: 2 / -1;
   width: min(100%, 30rem);
   min-height: 3.25rem;
   resize: vertical;
@@ -272,6 +282,10 @@ html.dark .workout-card {
   color: var(--color-text-primary);
   padding: 0.5rem 0.625rem;
   font: inherit;
+}
+.set-note button {
+  grid-column: 2;
+  justify-self: start;
 }
 .set-note textarea:focus-visible {
   outline: 2px solid var(--color-accent-400);
@@ -554,8 +568,10 @@ html.dark .sign-in-submit {
   .boardui .workout-grid input {
     padding-inline: 4px;
   }
+  .set-note-control,
   .set-note {
-    margin-left: 1.75rem;
+    grid-template-columns: 1.75rem minmax(0, 1fr) minmax(0, 1fr) 2.75rem;
+    column-gap: 0.375rem;
   }
 }
 
