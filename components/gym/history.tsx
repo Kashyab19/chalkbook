@@ -18,7 +18,8 @@ export function History({
     [exercise, setExercise] = useState('all'),
     [date, setDate] = useState(''),
     [metric, setMetric] = useState('weight'),
-    [atWeight, setAtWeight] = useState('');
+    [atWeight, setAtWeight] = useState(''),
+    [frictionMetric, setFrictionMetric] = useState('all');
   const exerciseOptions = Array.from(
     new Map(
       [
@@ -106,13 +107,19 @@ export function History({
           0,
         );
         const metrics = s.interactions!;
-        const current = weeks.get(week) ?? { interactions: 0, completed: 0 };
-        current.interactions +=
-          metrics.clicks + metrics.touches + metrics.keyboardEnters;
+        const current = weeks.get(week) ?? {
+          clicks: 0,
+          touches: 0,
+          keyboardEnters: 0,
+          completed: 0,
+        };
+        current.clicks += metrics.clicks;
+        current.touches += metrics.touches;
+        current.keyboardEnters += metrics.keyboardEnters;
         current.completed += completed;
         weeks.set(week, current);
         return weeks;
-      }, new Map<string, { interactions: number; completed: number }>())
+      }, new Map<string, { clicks: number; touches: number; keyboardEnters: number; completed: number }>())
       .entries(),
   )
     .map(([date, totals]) => ({
@@ -120,7 +127,17 @@ export function History({
       value:
         totals.completed === 0
           ? 0
-          : Math.round((totals.interactions / totals.completed) * 10) / 10,
+          : Math.round(
+              ((frictionMetric === 'clicks'
+                ? totals.clicks
+                : frictionMetric === 'touches'
+                  ? totals.touches
+                  : frictionMetric === 'enters'
+                    ? totals.keyboardEnters
+                    : totals.clicks + totals.touches + totals.keyboardEnters) /
+                totals.completed) *
+                10,
+            ) / 10,
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
   return (
@@ -155,13 +172,30 @@ export function History({
         <div className="paper">
           <h2>Friction trend</h2>
           <p className="muted small">
-            Interactions per completed set, by week. Lower usually means a
-            smoother logging flow.
+            Counts per completed set, by week. Lower usually means a smoother
+            logging flow.
           </p>
+          <Picker
+            label="Friction metric"
+            value={frictionMetric}
+            onChange={setFrictionMetric}
+            items={[
+              { value: 'all', label: 'All interactions' },
+              { value: 'clicks', label: 'Clicks' },
+              { value: 'touches', label: 'Touches' },
+              { value: 'enters', label: 'Enter presses' },
+            ]}
+          />
           <Chart
             rows={frictionRows}
-            unit="interactions / set"
-            label="Weekly workout interaction friction"
+            unit={`${
+              frictionMetric === 'all'
+                ? 'interactions'
+                : frictionMetric === 'enters'
+                  ? 'Enter presses'
+                  : frictionMetric
+            } / set`}
+            label={`Weekly ${frictionMetric} interaction trend`}
           />
         </div>
       )}
