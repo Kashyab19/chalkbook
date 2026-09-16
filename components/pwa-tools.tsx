@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { type Data } from '@/lib/training';
 import { parseBackup, type Action } from '@/lib/operations';
 import { transact } from '@/lib/notebook-store';
@@ -10,12 +10,27 @@ type Props = {
   save: (actions: Action[]) => Promise<boolean>;
   sync: () => Promise<void>;
   open?: boolean;
+  onUpdateReady?: (apply: (() => void) | null) => void;
 };
-export function PwaTools({ data, pending, save, sync, open = false }: Props) {
+export function PwaTools({
+  data,
+  pending,
+  save,
+  sync,
+  open = false,
+  onUpdateReady,
+}: Props) {
   const [offlineReady, setOfflineReady] = useState(false);
   const [update, setUpdate] = useState(false);
   const [message, setMessage] = useState('');
   const [backup, setBackup] = useState<Data>();
+  const registration = useRef<ServiceWorkerRegistration | null>(null);
+  const reloadAfterUpdate = useRef(false);
+  const applyUpdate = () => {
+    if (!registration.current?.waiting) return;
+    reloadAfterUpdate.current = true;
+    registration.current.waiting.postMessage({ type: 'skip-waiting' });
+  };
   useEffect(() => {
     const viewport = window.visualViewport;
     let controllerChanged: (() => void) | undefined;
@@ -39,10 +54,11 @@ export function PwaTools({ data, pending, save, sync, open = false }: Props) {
     viewport?.addEventListener('scroll', resize);
     if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
       controllerChanged = () => {
-        // A service worker can take control when an installed app returns from
-        // the background. Reloading here discarded the active screen on unlock.
-        // The new shell is used on the next normal launch instead.
         setUpdate(false);
+        onUpdateReady?.(null);
+        // Reload only after the person explicitly chose Update. Background
+        // service-worker activity must never interrupt a workout.
+        if (reloadAfterUpdate.current) location.reload();
       };
       navigator.serviceWorker.addEventListener(
         'controllerchange',
@@ -50,17 +66,20 @@ export function PwaTools({ data, pending, save, sync, open = false }: Props) {
       );
       void navigator.serviceWorker
         .register('/sw.js', { scope: '/', updateViaCache: 'none' })
-        .then((registration) => {
+        .then((nextRegistration) => {
+          registration.current = nextRegistration;
           const inspect = () => {
-            setOfflineReady(!!registration.active);
-            setUpdate(!!registration.waiting);
+            setOfflineReady(!!nextRegistration.active);
+            const ready = !!nextRegistration.waiting;
+            setUpdate(ready);
+            onUpdateReady?.(ready ? applyUpdate : null);
           };
           inspect();
-          registration.addEventListener('updatefound', () =>
-            registration.installing?.addEventListener('statechange', inspect),
+          nextRegistration.addEventListener('updatefound', () =>
+            nextRegistration.installing?.addEventListener('statechange', inspect),
           );
           void navigator.serviceWorker.ready.then(() => setOfflineReady(true));
-          void registration.update().catch(() => {});
+          void nextRegistration.update().catch(() => {});
         })
         .catch(() =>
           setMessage(
@@ -76,6 +95,7 @@ export function PwaTools({ data, pending, save, sync, open = false }: Props) {
           'controllerchange',
           controllerChanged,
         );
+      onUpdateReady?.(null);
     };
   }, []);
   async function exportBackup() {
@@ -149,8 +169,11 @@ export function PwaTools({ data, pending, save, sync, open = false }: Props) {
       </output>
       {update && (
         <p>
-          A new version is ready. Finish your entry, then close all Gym Notebook
-          windows and reopen. Saved device changes stay queued across updates.
+          A new version is ready. Finish your entry, then{' '}
+          <button className="text-button" onClick={applyUpdate}>
+            update now
+          </button>
+          . Saved device changes stay queued across updates.
         </p>
       )}
       <p>

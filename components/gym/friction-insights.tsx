@@ -53,7 +53,7 @@ export function FrictionInsights({ data }: { data: Data }) {
     .sort((a, b) => a.date.localeCompare(b.date));
   return (
     <details className="friction-insights">
-      <summary>Friction insights</summary>
+      <summary>Developer Insights</summary>
       {rows.length ? (
         <>
           <p className="muted small">

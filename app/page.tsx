@@ -50,7 +50,8 @@ export default function Home() {
     [date, setDate] = useState(''),
     [chosen, setChosen] = useState(''),
     [unit, setUnit] = useState('lb'),
-    [settingsOpen, setSettingsOpen] = useState(false);
+    [settingsOpen, setSettingsOpen] = useState(false),
+    [applyUpdate, setApplyUpdate] = useState<(() => void) | null>(null);
   useEffect(() => {
     // Client-only date initialization avoids timezone differences during Sites hydration.
     // eslint-disable-next-line react/react-compiler
@@ -268,6 +269,11 @@ export default function Home() {
             );
           })()}
         </span>
+        {applyUpdate && (
+          <Button variant="secondary" size="small" onClick={applyUpdate}>
+            Update
+          </Button>
+        )}
         <Button
           variant="secondary"
           iconOnly
@@ -431,6 +437,7 @@ export default function Home() {
         pending={notebook.pending}
         sync={notebook.sync}
         open={settingsOpen}
+        onUpdateReady={(apply) => setApplyUpdate(() => apply)}
       />
     </main>
   );
