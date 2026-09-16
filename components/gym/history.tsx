@@ -92,6 +92,37 @@ export function History({
       },
     ];
   });
+  const frictionRows = Array.from(
+    data.sessions
+      .filter((s) => s.interactions)
+      .reduce((weeks, s) => {
+        const date = new Date(`${s.date}T12:00:00`);
+        const offset = (date.getDay() + 6) % 7;
+        date.setDate(date.getDate() - offset);
+        const week = date.toISOString().slice(0, 10);
+        const completed = s.exercises.reduce(
+          (total, exercise) =>
+            total + exercise.entries.filter((entry) => entry.completed).length,
+          0,
+        );
+        const metrics = s.interactions!;
+        const current = weeks.get(week) ?? { interactions: 0, completed: 0 };
+        current.interactions +=
+          metrics.clicks + metrics.touches + metrics.keyboardEnters;
+        current.completed += completed;
+        weeks.set(week, current);
+        return weeks;
+      }, new Map<string, { interactions: number; completed: number }>())
+      .entries(),
+  )
+    .map(([date, totals]) => ({
+      date,
+      value:
+        totals.completed === 0
+          ? 0
+          : Math.round((totals.interactions / totals.completed) * 10) / 10,
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
   return (
     <section>
       <p className="eyebrow">YOUR TRAINING RECORD</p>
@@ -120,6 +151,20 @@ export function History({
         <span>Last 7 days: {recent(7).length} workouts</span>
         <span>Last 30 days: {recent(30).length} workouts</span>
       </div>
+      {frictionRows.length > 0 && (
+        <div className="paper">
+          <h2>Friction trend</h2>
+          <p className="muted small">
+            Interactions per completed set, by week. Lower usually means a
+            smoother logging flow.
+          </p>
+          <Chart
+            rows={frictionRows}
+            unit="interactions / set"
+            label="Weekly workout interaction friction"
+          />
+        </div>
+      )}
       <details className="history-filters">
         <summary>Filter history</summary>
         <div className="filters">

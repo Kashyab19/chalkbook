@@ -1,11 +1,18 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type PointerEvent,
+} from 'react';
 import { Button } from '@/components/boardui/base/buttons/button';
 import { Input } from '@/components/boardui/base/input/input';
 import { RiAddLine, RiChat1Line, RiCheckLine } from '@remixicon/react';
 import {
   type Session,
   type SetLog,
+  type InteractionMetrics,
   display,
   toKg,
   previous,
@@ -26,7 +33,7 @@ export function BoardWorkout({
   session: Session;
   sessions: Session[];
   unit: string;
-  save: (action: Action) => Promise<boolean>;
+  save: (action: Action | Action[]) => Promise<boolean>;
   saving: boolean;
 }) {
   const [expanded, setExpanded] = useState<number[]>([]),
@@ -43,7 +50,29 @@ export function BoardWorkout({
     [noteOpen, setNoteOpen] = useState(false);
   const [until, setUntil] = useDeviceDraft<number>(`rest-${session.id}`, 0);
   const lock = useRef(false);
-  const run = async (action: Action, after?: () => void) => {
+  const interactions = useRef<InteractionMetrics>(
+    session.interactions ?? { clicks: 0, touches: 0, keyboardEnters: 0 },
+  );
+  const interactionAction = (): Action => ({
+    type: 'interactions',
+    id: session.id,
+    value: { ...interactions.current },
+  });
+  const recordInteraction = (
+    event: PointerEvent<HTMLDivElement> | KeyboardEvent<HTMLDivElement>,
+  ) => {
+    const target = event.target as Element;
+    if (!target.closest('button,input,textarea,select,[role="checkbox"]')) return;
+    if (event.type === 'keydown') {
+      if ((event as KeyboardEvent<HTMLDivElement>).key === 'Enter')
+        interactions.current.keyboardEnters++;
+      return;
+    }
+    if ((event as PointerEvent<HTMLDivElement>).pointerType === 'touch')
+      interactions.current.touches++;
+    else interactions.current.clicks++;
+  };
+  const run = async (action: Action | Action[], after?: () => void) => {
     if (lock.current) return;
     lock.current = true;
     setBusy(true);
@@ -71,13 +100,16 @@ export function BoardWorkout({
   const mark = (j: number, i: number) => {
     const value = session.exercises[j].entries[i];
     void run(
-      {
+      [
+        {
         type: 'set',
         id: session.id,
         exercise: j,
         set: i,
         value: { ...value, completed: !value.completed },
-      },
+        },
+        interactionAction(),
+      ],
       () => {
         if (!value.completed) {
           setUndo({ exercise: j, set: i, value });
@@ -97,18 +129,25 @@ export function BoardWorkout({
   };
   const finish = () =>
     void run(
-      {
+      [
+        {
         type: 'finish',
         id: session.id,
         completedAt: finished ? null : new Date().toISOString(),
-      },
+        },
+        interactionAction(),
+      ],
       () => {
         setUntil(0);
         setUndo(null);
       },
     );
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <div
+      className="flex min-w-0 flex-col gap-4"
+      onPointerUpCapture={recordInteraction}
+      onKeyDownCapture={recordInteraction}
+    >
       <div className="workout-summary flex flex-wrap items-center justify-between gap-3">
         <p className="text-body-regular">
           {done}/{total} sets done{finished ? ' · finished' : ''}

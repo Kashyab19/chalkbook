@@ -101,6 +101,21 @@ void test('set notes are retained in workout records and backups', () => {
     validateAction({ ...action, value: { ...action.value, note: 'x'.repeat(1001) } }),
   );
 });
+void test('workout interaction summaries are retained with the session', () => {
+  const session = newSession('2026-09-07', defaultProgram[0], []);
+  let data = applyAction(blank(), { type: 'start', session });
+  const action = {
+    type: 'interactions' as const,
+    id: session.id,
+    value: { clicks: 4, touches: 7, keyboardEnters: 2 },
+  };
+  validateAction(action);
+  data = applyAction(data, action);
+  assert.deepEqual(data.sessions[0].interactions, action.value);
+  assert.throws(() =>
+    validateAction({ ...action, value: { ...action.value, clicks: -1 } }),
+  );
+});
 void test('backup validation preserves records and rejects malformed data', () => {
   const d = applyAction(blank(), {
     type: 'start',

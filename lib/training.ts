@@ -5,6 +5,11 @@ export type SetLog = {
   /** A brief, optional observation recorded immediately after this set. */
   note?: string;
 };
+export type InteractionMetrics = {
+  clicks: number;
+  touches: number;
+  keyboardEnters: number;
+};
 export type Exercise = {
   id: string;
   name: string;
@@ -27,6 +32,7 @@ export type Session = {
   exercises: LoggedExercise[];
   startedAt: string;
   completedAt: string | null;
+  interactions?: InteractionMetrics;
 };
 export type BodyEntry = { date: string; weightKg: number };
 export type Data = { program: Day[]; sessions: Session[]; body: BodyEntry[] };
@@ -161,6 +167,7 @@ export function newSession(
     name: day.name,
     startedAt: new Date().toISOString(),
     completedAt: null,
+    interactions: { clicks: 0, touches: 0, keyboardEnters: 0 },
     exercises: day.exercises.map((ex) => {
       const prev = previous(sessions, ex.id, date)?.exercise.entries;
       return {

@@ -1,4 +1,10 @@
-import { type Data, type Day, type Session, type SetLog } from './training';
+import {
+  type Data,
+  type Day,
+  type InteractionMetrics,
+  type Session,
+  type SetLog,
+} from './training';
 
 export type Action =
   | { type: 'start'; session: Session }
@@ -6,6 +12,7 @@ export type Action =
   | { type: 'addSet'; id: string; exercise: number; set: number; value: SetLog }
   | { type: 'removeSet'; id: string; exercise: number; set: number }
   | { type: 'finish'; id: string; completedAt: string | null }
+  | { type: 'interactions'; id: string; value: InteractionMetrics }
   | { type: 'program'; program: Day[] }
   | { type: 'body'; date: string; weightKg: number }
   | { type: 'deleteBody'; date: string }
@@ -58,6 +65,13 @@ export function applyAction(data: Data, action: Action): Data {
         ...data,
         sessions: data.sessions.map((s) =>
           s.id === action.id ? { ...s, completedAt: action.completedAt } : s,
+        ),
+      };
+    case 'interactions':
+      return {
+        ...data,
+        sessions: data.sessions.map((s) =>
+          s.id === action.id ? { ...s, interactions: action.value } : s,
         ),
       };
     case 'addSet':
@@ -138,6 +152,11 @@ const validExercise = (e: unknown) =>
   num(e.sets, 1, 10, true) &&
   num(e.min, 1, 100, true) &&
   num(e.max, e.min, 100, true);
+const validInteractions = (v: unknown): v is InteractionMetrics =>
+  object(v) &&
+  num(v.clicks, 0, 10000, true) &&
+  num(v.touches, 0, 10000, true) &&
+  num(v.keyboardEnters, 0, 10000, true);
 export function validSet(v: unknown): v is SetLog {
   return (
     object(v) &&
@@ -178,6 +197,7 @@ export function validSession(s: unknown): s is Session {
     !Number.isNaN(Date.parse(s.startedAt)) &&
     (s.completedAt === null ||
       (text(s.completedAt) && !Number.isNaN(Date.parse(s.completedAt)))) &&
+    (s.interactions === undefined || validInteractions(s.interactions)) &&
     Array.isArray(s.exercises) &&
     s.exercises.length <= 30 &&
     s.exercises.every(
@@ -226,6 +246,8 @@ export function validateAction(v: unknown): asserts v is Action {
           (v.completedAt === null ||
             (text(v.completedAt) && !Number.isNaN(Date.parse(v.completedAt))))
         );
+      case 'interactions':
+        return text(v.id, 200) && validInteractions(v.value);
       case 'program':
         return validProgram(v.program);
       case 'body':

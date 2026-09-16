@@ -115,6 +115,15 @@ export async function POST(request: Request) {
       case 'finish':
         statements.push(db.prepare(`UPDATE sessions SET data=json_set(data,'$.completedAt',?) WHERE id=? AND ${unseen}`).bind(a.completedAt,a.id,op.id));
         break;
+      case 'interactions':
+        statements.push(
+          db
+            .prepare(
+              `UPDATE sessions SET data=json_set(data,'$.interactions',json(?)) WHERE id=? AND ${unseen}`,
+            )
+            .bind(JSON.stringify(a.value), a.id, op.id),
+        );
+        break;
       case 'program':
         statements.push(
           db

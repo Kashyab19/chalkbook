@@ -86,6 +86,7 @@ export async function writeOperation(owner: string, operation: Operation) {
       case 'addSet':
       case 'removeSet':
       case 'finish':
+      case 'interactions':
       case 'set': {
         const result = await client.query(
           'SELECT data FROM fitness.workout_sessions WHERE owner_id=$1 AND id=$2',
