@@ -51,30 +51,38 @@ export function FrictionInsights({ data }: { data: Data }) {
       };
     })
     .sort((a, b) => a.date.localeCompare(b.date));
-  if (!rows.length) return null;
   return (
     <details className="friction-insights">
       <summary>Friction insights</summary>
-      <p className="muted small">
-        Private weekly counts per completed set. Lower usually means a smoother
-        logging flow.
-      </p>
-      <Picker
-        label="Friction metric"
-        value={metric}
-        onChange={setMetric}
-        items={[
-          { value: 'all', label: 'All interactions' },
-          { value: 'clicks', label: 'Clicks' },
-          { value: 'touches', label: 'Touches' },
-          { value: 'enters', label: 'Enter presses' },
-        ]}
-      />
-      <Chart
-        rows={rows}
-        unit={`${metric === 'all' ? 'interactions' : metric === 'enters' ? 'Enter presses' : metric} / set`}
-        label={`Weekly ${metric} interaction trend`}
-      />
+      {rows.length ? (
+        <>
+          <p className="muted small">
+            Private weekly counts per completed set. Lower usually means a
+            smoother logging flow.
+          </p>
+          <Picker
+            label="Friction metric"
+            value={metric}
+            onChange={setMetric}
+            items={[
+              { value: 'all', label: 'All interactions' },
+              { value: 'clicks', label: 'Clicks' },
+              { value: 'touches', label: 'Touches' },
+              { value: 'enters', label: 'Enter presses' },
+            ]}
+          />
+          <Chart
+            rows={rows}
+            unit={`${metric === 'all' ? 'interactions' : metric === 'enters' ? 'Enter presses' : metric} / set`}
+            label={`Weekly ${metric} interaction trend`}
+          />
+        </>
+      ) : (
+        <p className="muted small">
+          Tracking starts with your next completed set. Your first weekly trend
+          will appear here automatically.
+        </p>
+      )}
     </details>
   );
 }
