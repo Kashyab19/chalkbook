@@ -20,6 +20,7 @@ import {
 } from '@remixicon/react';
 import { Picker } from '@/components/gym/controls';
 import { History } from '@/components/gym/history';
+import { FrictionInsights } from '@/components/gym/friction-insights';
 import { Program } from '@/components/gym/program';
 import {
   days,
@@ -324,6 +325,7 @@ export default function Home() {
           >
             Sign out
           </button>
+          <FrictionInsights data={data} />
         </section>
       )}
       <BoardTabs

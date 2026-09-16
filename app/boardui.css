@@ -310,6 +310,20 @@ html.dark .boardui [data-input-size] > [role='presentation']:focus-within {
 .workout-dock button {
   white-space: normal;
 }
+.friction-insights {
+  margin-top: 20px;
+  border-top: 1px solid var(--color-separator-border);
+  padding-top: 16px;
+}
+.friction-insights summary {
+  cursor: pointer;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+.friction-insights .muted {
+  margin: 10px 0;
+}
 @media (max-width: 640px) {
   .workout-dock {
     position: static !important;
