@@ -75,6 +75,19 @@ body {
   font-size: 16px;
   white-space: nowrap;
 }
+.board-brand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+}
+.board-brand img,
+.auth-brand img,
+.loading-logo {
+  display: block;
+  border-radius: 11px;
+  object-fit: cover;
+}
 .board-header .header-status {
   display: inline-flex;
   align-items: center;
@@ -245,6 +258,25 @@ body {
 .workout-card-complete::before {
   background: var(--color-separator-border);
   opacity: 1;
+}
+.exercise-art {
+  display: block;
+  flex: 0 0 auto;
+  overflow: hidden;
+  background: #ddecf0;
+}
+.exercise-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.42);
+}
+.workout-exercise-art {
+  width: 58px;
+  height: 58px;
+  border: 1px solid var(--color-separator-border);
+  border-radius: 14px;
 }
 html.dark .workout-card {
   box-shadow: 0 10px 26px rgb(0 0 0 / 0.18);
@@ -431,16 +463,33 @@ html.dark .boardui [data-input-size] > [role='presentation']:focus-within {
   min-height: 66px;
   padding: 10px 0;
 }
+.program-exercise-visual {
+  position: relative;
+  display: block;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+}
+.program-exercise-art {
+  width: 52px;
+  height: 52px;
+  border: 1px solid var(--color-separator-border);
+  border-radius: 12px;
+}
 .boardui .program-exercise .exercise-number {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
   display: grid;
-  width: 30px;
-  min-width: 30px;
-  height: 30px;
+  width: 22px;
+  min-width: 22px;
+  height: 22px;
   place-items: center;
-  border-radius: 9px;
+  border: 2px solid var(--color-background-primary-default);
+  border-radius: 7px;
   background: var(--color-background-secondary-default);
   color: var(--color-accent-600);
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
 }
 .boardui .program-exercise .exercise-edit {
@@ -476,8 +525,8 @@ html.dark .boardui [data-input-size] > [role='presentation']:focus-within {
     padding-right: 12px;
   }
   .boardui .program-exercise .exercise-number {
-    width: 28px;
-    min-width: 28px;
+    width: 22px;
+    min-width: 22px;
   }
 }
 .boardui .program-exercise + .program-exercise {

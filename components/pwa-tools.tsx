@@ -31,6 +31,15 @@ export function PwaTools({
     reloadAfterUpdate.current = true;
     registration.current.waiting.postMessage({ type: 'skip-waiting' });
   };
+  const shellIsCached = async () => {
+    if (!('caches' in window)) return false;
+    const keys = await caches.keys();
+    const shell = keys.find((key) => key.startsWith('gym-shell-'));
+    return (
+      !!shell &&
+      !!(await caches.open(shell)).match(new URL('/', location.href).toString())
+    );
+  };
   useEffect(() => {
     const viewport = window.visualViewport;
     let controllerChanged: (() => void) | undefined;
@@ -68,17 +77,24 @@ export function PwaTools({
         .register('/sw.js', { scope: '/', updateViaCache: 'none' })
         .then((nextRegistration) => {
           registration.current = nextRegistration;
-          const inspect = () => {
-            setOfflineReady(!!nextRegistration.active);
+          const inspect = async () => {
+            // An active worker alone is not enough: a failed install can leave
+            // a worker present without a complete shell for the next offline
+            // launch. Only promise offline use after the root shell is cached.
+            setOfflineReady(
+              !!navigator.serviceWorker.controller && (await shellIsCached()),
+            );
             const ready = !!nextRegistration.waiting;
             setUpdate(ready);
             onUpdateReady?.(ready ? applyUpdate : null);
           };
-          inspect();
+          void inspect();
           nextRegistration.addEventListener('updatefound', () =>
-            nextRegistration.installing?.addEventListener('statechange', inspect),
+            nextRegistration.installing?.addEventListener('statechange', () =>
+              void inspect(),
+            ),
           );
-          void navigator.serviceWorker.ready.then(() => setOfflineReady(true));
+          void navigator.serviceWorker.ready.then(() => void inspect());
           void nextRegistration.update().catch(() => {});
         })
         .catch(() =>

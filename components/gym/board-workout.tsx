@@ -21,6 +21,7 @@ import {
 import { type Action, validSet } from '@/lib/operations';
 import { cx } from '@/lib/boardui-cx';
 import { useDeviceDraft } from '@/hooks/use-device-draft';
+import { ExerciseArt } from './exercise-art';
 const card =
   'rounded-3xl border border-border-button-default bg-background-primary-default p-4 sm:p-6';
 export function BoardWorkout({
@@ -62,7 +63,8 @@ export function BoardWorkout({
     event: PointerEvent<HTMLDivElement> | KeyboardEvent<HTMLDivElement>,
   ) => {
     const target = event.target as Element;
-    if (!target.closest('button,input,textarea,select,[role="checkbox"]')) return;
+    if (!target.closest('button,input,textarea,select,[role="checkbox"]'))
+      return;
     if (event.type === 'keydown') {
       if ((event as KeyboardEvent<HTMLDivElement>).key === 'Enter')
         interactions.current.keyboardEnters++;
@@ -102,11 +104,11 @@ export function BoardWorkout({
     void run(
       [
         {
-        type: 'set',
-        id: session.id,
-        exercise: j,
-        set: i,
-        value: { ...value, completed: !value.completed },
+          type: 'set',
+          id: session.id,
+          exercise: j,
+          set: i,
+          value: { ...value, completed: !value.completed },
         },
         interactionAction(),
       ],
@@ -131,9 +133,9 @@ export function BoardWorkout({
     void run(
       [
         {
-        type: 'finish',
-        id: session.id,
-        completedAt: finished ? null : new Date().toISOString(),
+          type: 'finish',
+          id: session.id,
+          completedAt: finished ? null : new Date().toISOString(),
         },
         interactionAction(),
       ],
@@ -183,12 +185,18 @@ export function BoardWorkout({
               )}
             >
               <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-headline-medium">{ex.name}</h2>
-                  <p className="text-caption-1-regular text-text-secondary">
-                    {ex.entries.filter((s) => s.completed).length}/
-                    {ex.entries.length} done · {ex.min}–{ex.max} reps
-                  </p>
+                <div className="flex min-w-0 items-center gap-3">
+                  <ExerciseArt
+                    name={ex.name}
+                    className="workout-exercise-art"
+                  />
+                  <div className="min-w-0">
+                    <h2 className="text-headline-medium">{ex.name}</h2>
+                    <p className="text-caption-1-regular text-text-secondary">
+                      {ex.entries.filter((s) => s.completed).length}/
+                      {ex.entries.length} done · {ex.min}–{ex.max} reps
+                    </p>
+                  </div>
                 </div>
                 {complete && (
                   <Button
@@ -216,85 +224,88 @@ export function BoardWorkout({
                     <span>Done</span>
                   </div>
                   {ex.entries.map((s, i) => (
-                      <div
-                        id={`set-${j}-${i}`}
-                        key={i}
-                        className={cx(
-                          'my-2 rounded-xl',
-                          s.completed && 'bg-background-secondary-default',
-                          j === nextJ &&
-                            i === nextI &&
-                            !finished &&
-                            'current-set',
-                        )}
-                      >
-                        <div className="workout-grid">
-                      <span className="text-body-medium text-center">
-                        {i + 1}
-                        {i >= ex.sets && (
-                          <span className="block text-caption-1-regular">
-                            extra
-                          </span>
-                        )}
-                      </span>
-                      <SetField
-                        key={`${session.id}-${j}-${i}-weight-${unit}`}
-                        draftKey={`${session.id}-${j}-${i}-weight-${unit}`}
-                        label={`${ex.name} set ${i + 1} weight`}
-                        value={
-                          s.weightKg === null ? null : display(s.weightKg, unit)
-                        }
-                        max={display(2000, unit)}
-                        disabled={finished}
-                        onSave={(n) =>
-                          save({
-                            type: 'set',
-                            id: session.id,
-                            exercise: j,
-                            set: i,
-                            value: {
-                              ...s,
-                              weightKg: n === null ? null : toKg(n, unit),
-                              completed: false,
-                            },
-                          })
-                        }
-                      />
-                      <SetField
-                        key={`${session.id}-${j}-${i}-reps`}
-                        draftKey={`${session.id}-${j}-${i}-reps`}
-                        label={`${ex.name} set ${i + 1} reps`}
-                        value={s.reps}
-                        max={500}
-                        integer
-                        disabled={finished}
-                        onSave={(n) =>
-                          save({
-                            type: 'set',
-                            id: session.id,
-                            exercise: j,
-                            set: i,
-                            value: { ...s, reps: n, completed: false },
-                          })
-                        }
-                      />
-                      <Button
-                        iconOnly
-                        leadingIcon={RiCheckLine}
-                        className="min-h-11 min-w-11"
-                        aria-label={`Complete ${ex.name} set ${i + 1}`}
-                        aria-pressed={s.completed}
-                        variant={s.completed ? 'primary' : 'secondary'}
-                        disabled={
-                          finished ||
-                          busy ||
-                          saving ||
-                          (!s.completed && !validSet({ ...s, completed: true }))
-                        }
-                        onClick={() => mark(j, i)}
-                      />
-                        </div>
+                    <div
+                      id={`set-${j}-${i}`}
+                      key={i}
+                      className={cx(
+                        'my-2 rounded-xl',
+                        s.completed && 'bg-background-secondary-default',
+                        j === nextJ &&
+                          i === nextI &&
+                          !finished &&
+                          'current-set',
+                      )}
+                    >
+                      <div className="workout-grid">
+                        <span className="text-body-medium text-center">
+                          {i + 1}
+                          {i >= ex.sets && (
+                            <span className="block text-caption-1-regular">
+                              extra
+                            </span>
+                          )}
+                        </span>
+                        <SetField
+                          key={`${session.id}-${j}-${i}-weight-${unit}`}
+                          draftKey={`${session.id}-${j}-${i}-weight-${unit}`}
+                          label={`${ex.name} set ${i + 1} weight`}
+                          value={
+                            s.weightKg === null
+                              ? null
+                              : display(s.weightKg, unit)
+                          }
+                          max={display(2000, unit)}
+                          disabled={finished}
+                          onSave={(n) =>
+                            save({
+                              type: 'set',
+                              id: session.id,
+                              exercise: j,
+                              set: i,
+                              value: {
+                                ...s,
+                                weightKg: n === null ? null : toKg(n, unit),
+                                completed: false,
+                              },
+                            })
+                          }
+                        />
+                        <SetField
+                          key={`${session.id}-${j}-${i}-reps`}
+                          draftKey={`${session.id}-${j}-${i}-reps`}
+                          label={`${ex.name} set ${i + 1} reps`}
+                          value={s.reps}
+                          max={500}
+                          integer
+                          disabled={finished}
+                          onSave={(n) =>
+                            save({
+                              type: 'set',
+                              id: session.id,
+                              exercise: j,
+                              set: i,
+                              value: { ...s, reps: n, completed: false },
+                            })
+                          }
+                        />
+                        <Button
+                          iconOnly
+                          leadingIcon={RiCheckLine}
+                          className="min-h-11 min-w-11"
+                          aria-label={`Complete ${ex.name} set ${i + 1}`}
+                          aria-pressed={s.completed}
+                          variant={s.completed ? 'primary' : 'secondary'}
+                          disabled={
+                            finished ||
+                            busy ||
+                            saving ||
+                            (!s.completed &&
+                              !validSet({ ...s, completed: true }))
+                          }
+                          onClick={() => mark(j, i)}
+                        />
                       </div>
+                    </div>
                   ))}
                 </div>
               )}

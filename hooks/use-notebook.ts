@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   commit,
+  recover,
   transact,
   acknowledge,
   mergeServer,
@@ -64,6 +65,7 @@ export function useNotebook() {
   const [error, setError] = useState('');
   const [localError, setLocalError] = useState('');
   const [writingLocally, setWritingLocally] = useState(false);
+  const [recovered, setRecovered] = useState(false);
   const running = useRef<Promise<void> | null>(null);
   const again = useRef(false);
   const writing = useRef(0);
@@ -151,6 +153,10 @@ export function useNotebook() {
   useEffect(() => {
     void (async () => {
       try {
+        // Do this before the first read. It is a no-op on browsers that do not
+        // expose persistent storage, but improves iOS/Android eviction odds.
+        void navigator.storage?.persist?.().catch(() => {});
+        if (await recover()) setRecovered(true);
         const snapshot = await transact();
         publish(snapshot);
         await sync();
@@ -200,6 +206,7 @@ export function useNotebook() {
     localError,
     error,
     pending: snapshot?.pending.length ?? 0,
+    recovered,
     status: localError
       ? 'Not saved on device'
       : writingLocally

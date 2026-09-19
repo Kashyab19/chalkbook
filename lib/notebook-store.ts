@@ -14,6 +14,9 @@ export type Snapshot = {
   revision: number;
   lastSync: string | null;
 };
+const recoveryCache = 'gym-notebook-recovery-v1';
+const recoveryKey = () =>
+  `/__gym-notebook-recovery__/${encodeURIComponent(deviceOwner() ?? 'unassigned')}`;
 const empty = (): Snapshot => ({
   data: null,
   pending: [],
@@ -21,6 +24,60 @@ const empty = (): Snapshot => ({
   lastSync: null,
 });
 let opening: Promise<IDBDatabase> | undefined;
+
+// IndexedDB is the source of truth. This is a deliberately small second local
+// copy of the same committed snapshot: it gives us a recovery path if a browser
+// loses or corrupts the IndexedDB record while retaining its Cache Storage.
+// It never leaves the device and is not used to answer network requests.
+async function mirrorRecovery(snapshot: Snapshot) {
+  if (!snapshot.data || !('caches' in window)) return;
+  try {
+    const cache = await caches.open(recoveryCache);
+    await cache.put(
+      recoveryKey(),
+      new Response(JSON.stringify(snapshot), {
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+  } catch {
+    // A successful IndexedDB transaction remains a successful local save even
+    // when this optional second copy cannot be written.
+  }
+}
+
+function validRecovery(value: unknown): value is Snapshot {
+  if (!value || typeof value !== 'object') return false;
+  const snapshot = value as Partial<Snapshot>;
+  try {
+    if (!snapshot.data || !Array.isArray(snapshot.pending)) return false;
+    validateData(snapshot.data);
+    snapshot.pending.forEach((operation) => {
+      if (!operation || typeof operation.id !== 'string') throw Error();
+      validateAction(operation.action);
+    });
+    return typeof snapshot.revision === 'number' && Number.isFinite(snapshot.revision);
+  } catch {
+    return false;
+  }
+}
+
+export async function recover() {
+  if (!deviceOwner() || !('caches' in window)) return false;
+  try {
+    const response = await (await caches.open(recoveryCache)).match(recoveryKey());
+    const recovered = response ? await response.json().catch(() => null) : null;
+    if (!validRecovery(recovered)) return false;
+    let used = false;
+    await transact((current) => {
+      if (current.data) return current;
+      used = true;
+      return recovered;
+    });
+    return used;
+  } catch {
+    return false;
+  }
+}
 function database() {
   return (opening ??= new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(deviceOwner() ? `gym-notebook-${deviceOwner()}` : 'gym-notebook', 1);
@@ -52,7 +109,7 @@ export async function transact(
   change?: (snapshot: Snapshot) => Snapshot,
 ): Promise<Snapshot> {
   const db = await database();
-  return new Promise((resolve, reject) => {
+  const snapshot = await new Promise<Snapshot>((resolve, reject) => {
     let tx: IDBTransaction;
     try {
       tx = db.transaction('notebook', change ? 'readwrite' : 'readonly', {
@@ -83,6 +140,8 @@ export async function transact(
         error ?? tx.error ?? Error('Device storage could not save this edit.'),
       );
   });
+  if (change) await mirrorRecovery(snapshot);
+  return snapshot;
 }
 export async function commit(actions: Action[]) {
   actions.forEach(validateAction);

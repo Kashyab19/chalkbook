@@ -4,6 +4,7 @@ import { useDeviceDraft } from '@/hooks/use-device-draft';
 import { ArrowUp, ArrowDown, Plus } from 'lucide-react';
 import { Picker } from './controls';
 import { days, type Day, type Exercise } from '@/lib/training';
+import { ExerciseArt } from './exercise-art';
 export function Program({
   program,
   onChange,
@@ -115,8 +116,11 @@ export function Program({
         )}
         {day.exercises.map((e, i) => (
           <div className="program-exercise" key={e.id}>
-            <span className="exercise-number">
-              {String(i + 1).padStart(2, '0')}
+            <span className="program-exercise-visual">
+              <ExerciseArt name={e.name} className="program-exercise-art" />
+              <span className="exercise-number">
+                {String(i + 1).padStart(2, '0')}
+              </span>
             </span>
             <button
               className="exercise-edit"

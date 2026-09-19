@@ -116,7 +116,13 @@ export default function Home() {
               : [
                   day.exercises[0],
                   day.exercises[1],
-                  { id: 't-bar-row', name: 'T-Bar Row', sets: 3, min: 8, max: 12 },
+                  {
+                    id: 't-bar-row',
+                    name: 'T-Bar Row',
+                    sets: 3,
+                    min: 8,
+                    max: 12,
+                  },
                   ...day.exercises.slice(3),
                 ],
         }
@@ -134,7 +140,8 @@ export default function Home() {
     const needsProgramUpdate =
       upper?.day === 4 ||
       lower?.day === 5 ||
-      data.program.find((d) => d.id === 'legs')?.name !== 'Hamstrings & Glutes' ||
+      data.program.find((d) => d.id === 'legs')?.name !==
+        'Hamstrings & Glutes' ||
       data.program.find((d) => d.id === 'lower')?.name !== 'Glutes & Quads';
     if (needsProgramUpdate) {
       scheduleMigrated.current = true;
@@ -232,12 +239,14 @@ export default function Home() {
     ).catch(() => {});
     return () => controller.abort();
   }, [save]);
-  if (notebook.initializing)
-    return <NotebookLoading />;
+  if (notebook.initializing) return <NotebookLoading />;
   if (!loaded)
     return (
       <main className="auth-page">
         <header className="auth-brand">
+          {/* Static local art is already compressed and dimensioned. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/logo.webp" alt="" width="44" height="44" />
           <strong>Gym Notebook</strong>
         </header>
         <div className="auth-content">
@@ -253,7 +262,11 @@ export default function Home() {
   return (
     <main className="notebook boardui">
       <header className="board-header">
-        <strong>Gym Notebook</strong>
+        <div className="board-brand">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/logo.webp" alt="" width="40" height="40" />
+          <strong>Gym Notebook</strong>
+        </div>
         <span
           className="save-status header-status"
           role="status"
@@ -363,11 +376,19 @@ export default function Home() {
             )}
           </div>
         )}
+        {notebook.recovered && !notebook.error && !notebook.localError && (
+          <div className="recovery-notice" role="status">
+            Recovered this notebook from a device backup. It will sync when you
+            reconnect.
+          </div>
+        )}
         <BoardTabPanel id="today">
           <div className="board-workout-heading">
             <h1>{workoutDay?.name || 'Today'}</h1>
             {workoutDay?.id === 'pull' && date && (
-              <p className="muted small">{weekParity(date).label} · week {weekParity(date).week}</p>
+              <p className="muted small">
+                {weekParity(date).label} · week {weekParity(date).week}
+              </p>
             )}
             <label className="date-label">
               <span className="sr-only">Workout date</span>
@@ -445,11 +466,14 @@ export default function Home() {
 function NotebookLoading() {
   return (
     <main className="notebook-loading" aria-busy="true" aria-live="polite">
-      <div className="loading-mark" aria-hidden="true">
-        <i />
-        <i />
-        <i />
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        className="loading-logo"
+        src="/brand/logo.webp"
+        alt=""
+        width="88"
+        height="88"
+      />
       <div>
         <strong>Gym Notebook</strong>
         <p>Opening your training log</p>
