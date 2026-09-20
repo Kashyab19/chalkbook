@@ -85,6 +85,12 @@ The implementation preserves the source hierarchy: compact session title/progres
 - Fix: constrained and centered the four-item navigation at mobile and desktop breakpoints, replaced trophies with the mapped 3D bench/squat/deadlift art, added an eight-week activity bar chart, defaulted History to meaningful workouts from the last 90 days with 30-day and All-time controls, compacted the swipeable Program strip, and added four persistent accent palettes.
 - Post-fix evidence: at 375 × 667, Today retains all set-entry controls above the fold, History shows correct 3D lift art and the activity chart, Program shows a compact horizontal schedule, Violet updates the settings selection and shared UI tokens, and the browser console reports no warnings or errors. The default desktop view shows a centered 540px navigation container.
 
+### Iteration 10
+
+- [P1] Settings controls used inconsistent widths, the rest-duration group wrapped a single option onto a second line, theme labels competed for narrow space, and Data & device presented installation, status, backup controls, native file chrome, and sync rules as one undifferentiated block.
+- Fix: rebuilt Settings rows on a stable label/control grid, kept all five rest durations on one line, gave accent choices responsive 4-column/2-column layouts, split device management into focused Install and Backup cards, replaced visible native file chrome with an accessible Import backup control, and moved technical sync details into a disclosure. Replaced the legacy gym-room logo and favicon set with a small-size-safe Repwise R/barbell mark.
+- Post-fix evidence: at 1440 × 900 the Training controls align to one consistent right-hand column and Data & device reads as two balanced task cards; at 375 × 667 every control stacks without horizontal overflow and the two device cards become a single column. The new identity remains clear at 40px in the app header.
+
 ## Primary interactions tested
 
 - Changed workout date to a scheduled training day.

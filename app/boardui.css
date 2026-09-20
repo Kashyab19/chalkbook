@@ -1780,6 +1780,60 @@ html[data-accent='coral'] { --app-accent-300: #ffb3a8; --app-accent-400: #ff9586
   .accent-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* Settings layout: predictable controls on desktop, clean stacking on mobile. */
+.notebook.boardui .settings-page { max-width: 920px; }
+.notebook.boardui .settings-section { padding-inline: 24px; }
+.notebook.boardui .settings-row {
+  display: grid;
+  min-height: 94px;
+  grid-template-columns: minmax(220px, 1fr) minmax(360px, 460px);
+  align-items: center;
+  gap: 28px;
+}
+.notebook.boardui .settings-row > :last-child { width: 100%; justify-self: end; }
+.notebook.boardui .settings-row .units { width: auto; justify-self: end; }
+.notebook.boardui .settings-row .settings-rest-options { width: 100%; max-width: none; flex: none; }
+.settings-rest-options { grid-template-columns: repeat(5, minmax(0, 1fr)); overflow: visible; }
+.accent-options { width: 100%; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.accent-options button { min-width: 0; white-space: nowrap; }
+.accent-options button span { overflow: hidden; text-overflow: ellipsis; }
+
+.notebook.boardui .settings-tools { padding-bottom: 20px; }
+.device-settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 18px 0 14px; }
+.device-setting-card { min-width: 0; padding: 18px; border: 1px solid #303330; border-radius: 18px; background: #111312; }
+.notebook.boardui .settings-tools .device-setting-card h3 { margin: 0; font-size: 16px; }
+.device-setting-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.device-setting-title > div { display: flex; align-items: center; gap: 9px; }
+.device-setting-number { display: grid; width: 26px; height: 26px; flex: 0 0 auto; place-items: center; border-radius: 8px; background: color-mix(in srgb, var(--app-accent-500) 10%, transparent); color: var(--app-accent-500); font-size: 11px; font-weight: 850; }
+.notebook.boardui .settings-tools .device-setting-title output { width: auto; max-width: 130px; margin: 0; padding: 6px 9px; border-radius: 999px; color: #b7bcb8; font-size: 10px; line-height: 1.2; text-align: center; }
+.notebook.boardui .settings-tools .device-setting-title output.is-ready { border-color: color-mix(in srgb, var(--app-accent-500) 34%, #303330); color: var(--app-accent-400); }
+.notebook.boardui .settings-tools .device-setting-card > p { margin: 15px 0 0; line-height: 1.55; }
+.notebook.boardui .settings-tools .device-setting-card strong { color: #f7f7f2; }
+.notebook.boardui .settings-tools .device-update { padding-top: 12px; border-top: 1px solid #292c2a; }
+.notebook.boardui .settings-tools .backup-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 18px 0 0; }
+.notebook.boardui .settings-tools .backup-actions > * { width: 100%; min-width: 0; margin: 0; cursor: pointer; }
+.restore-label { position: relative; overflow: hidden; }
+.restore-label input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.sync-details { margin-top: 0; border-top: 1px solid #292c2a; }
+.sync-details summary { min-height: 48px; padding: 15px 2px 10px; color: #c7cbc8; font-size: 13px; font-weight: 700; cursor: pointer; }
+.notebook.boardui .settings-tools .sync-details p { max-width: 720px; margin: 0 0 12px; }
+.notebook.boardui .settings-tools output.settings-message { margin: 8px 0 0; color: var(--app-accent-400); }
+
+@media (max-width: 760px) {
+  .notebook.boardui .settings-section { padding-inline: 16px; }
+  .notebook.boardui .settings-row { grid-template-columns: 1fr; align-items: stretch; gap: 14px; padding-block: 18px; }
+  .notebook.boardui .settings-row > :last-child { justify-self: stretch; }
+  .notebook.boardui .settings-row .units { width: max-content; justify-self: start; }
+  .device-settings-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 430px) {
+  .settings-rest-options { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+  .settings-rest-options button { min-width: 0; padding-inline: 4px; font-size: 12px; }
+  .accent-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .device-setting-title { display: grid; }
+  .notebook.boardui .settings-tools .device-setting-title output { max-width: none; justify-self: start; }
+}
+
 @media (max-width: 440px) and (max-height: 740px) {
   .focus-workout { gap: 10px; padding: 2px 14px 18px; }
   .focus-session-header { grid-template-columns: minmax(0, 1fr) 72px 42px; gap: 8px; }

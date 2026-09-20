@@ -168,66 +168,63 @@ export function PwaTools({
         <div><span>02</span><h2 id="device-settings-title">Data &amp; device</h2></div>
         <p>Offline access, updates, and private backups.</p>
       </div>
-      <h3>Install on your iPhone</h3>
-      <p>
-        Open this address in Safari, tap Share, then Add to Home Screen. Keep
-        Open as Web App enabled if shown, then tap Add.
-      </p>
-      <p>
-        The first visit needs internet. After installing, open the home-screen
-        app online once, sign in if asked, and wait for “Synced” and “Ready
-        offline” before leaving reception.
-      </p>
-      <output>
-        {offlineReady && data
-          ? 'Ready offline'
-          : 'Offline setup needs a successful online load'}
-        {pending ? ` · ${pending} changes waiting to sync` : ''}
-      </output>
-      {update && (
-        <p>
-          A new version is ready. Finish your entry, then{' '}
-          <button className="text-button" onClick={applyUpdate}>
-            update now
-          </button>
-          . Saved device changes stay queued across updates.
-        </p>
-      )}
-      <p>
-        Your notebook stays on this device for offline use. A device passcode
-        protects access. Clearing website data removes unsynced edits; export a
-        backup periodically.
-      </p>
-      <div className="backup-actions">
-        <button
-          className="text-button"
-          disabled={!data}
-          onClick={() => void exportBackup()}
-        >
-          Export backup
-        </button>
-        <label className="restore-label">
-          Choose backup
-          <input
-            type="file"
-            accept="application/json,.json"
-            disabled={!data}
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              e.target.value = '';
-              if (!file) return;
-              try {
-                if (file.size > 20_000_000)
-                  throw Error('Backup is too large (20 MB maximum).');
-                setBackup(parseBackup(JSON.parse(await file.text())));
-                setMessage('');
-              } catch (error) {
-                setBackup(undefined);
-                setMessage((error as Error).message);
-              }
-            }}
-          />
-        </label>
+      <div className="device-settings-grid">
+        <section className="device-setting-card">
+          <div className="device-setting-title">
+            <div><span className="device-setting-number">A</span><h3>Install on iPhone</h3></div>
+            <output className={offlineReady && data ? 'is-ready' : ''}>
+              {offlineReady && data ? 'Ready offline' : 'Online setup needed'}
+              {pending ? ` · ${pending} waiting` : ''}
+            </output>
+          </div>
+          <p>
+            In Safari, tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>.
+            Open Repwise online once before taking it offline.
+          </p>
+          {update && (
+            <p className="device-update">
+              A new version is ready. Finish your entry, then{' '}
+              <button className="text-button" onClick={applyUpdate}>update now</button>.
+            </p>
+          )}
+        </section>
+        <section className="device-setting-card">
+          <div className="device-setting-title">
+            <div><span className="device-setting-number">B</span><h3>Backup &amp; restore</h3></div>
+          </div>
+          <p>Keep a private copy of workouts, body weight, and your program.</p>
+          <div className="backup-actions">
+            <button
+              className="text-button"
+              disabled={!data}
+              onClick={() => void exportBackup()}
+            >
+              Export backup
+            </button>
+            <label className="restore-label">
+              Import backup
+              <input
+                type="file"
+                accept="application/json,.json"
+                disabled={!data}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = '';
+                  if (!file) return;
+                  try {
+                    if (file.size > 20_000_000)
+                      throw Error('Backup is too large (20 MB maximum).');
+                    setBackup(parseBackup(JSON.parse(await file.text())));
+                    setMessage('');
+                  } catch (error) {
+                    setBackup(undefined);
+                    setMessage((error as Error).message);
+                  }
+                }}
+              />
+            </label>
+          </div>
+        </section>
       </div>
       {backup && (
         <div className="restore-preview">
@@ -244,13 +241,15 @@ export function PwaTools({
           </button>
         </div>
       )}
-      <p>
-        Sync conflicts: the last change received wins for the same set,
-        body-weight date, or program. Different sets are independent. Editing a
-        deleted workout does not bring it back. Restoring a backup explicitly
-        can.
-      </p>
-      <output>{message}</output>
+      <details className="sync-details">
+        <summary>How data and sync work</summary>
+        <p>
+          Repwise keeps an offline copy on this device. For edits to the same
+          set, body-weight date, or program, the latest synced change wins.
+          Restoring a backup only replaces matching records.
+        </p>
+      </details>
+      {message && <output className="settings-message">{message}</output>}
     </section>
   );
 }

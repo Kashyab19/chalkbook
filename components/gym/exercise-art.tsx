@@ -7,7 +7,7 @@ export function ExerciseArt({
   name: string;
   className?: string;
 }) {
-  const src = exerciseArtPath(name) ?? '/brand/logo.webp';
+  const src = exerciseArtPath(name) ?? '/brand/repwise-mark.png';
 
   return (
     <span aria-hidden="true" className={`exercise-art ${className}`}>

@@ -268,7 +268,7 @@ export default function Home() {
         <header className="auth-brand">
           {/* Static local art is already compressed and dimensioned. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/logo.webp" alt="" width="44" height="44" />
+          <img src="/brand/repwise-mark.png" alt="" width="44" height="44" />
           <strong>Repwise</strong>
         </header>
         <div className="auth-content">
@@ -286,7 +286,7 @@ export default function Home() {
       <header className="board-header">
         <div className="board-brand">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/logo.webp" alt="" width="40" height="40" />
+          <img src="/brand/repwise-mark.png" alt="" width="40" height="40" />
           <strong>Repwise</strong>
         </div>
         <span
@@ -483,7 +483,7 @@ export default function Home() {
                 <div className="accent-options" aria-label="Accent color">
                   {[
                     ['lime', 'Lime', '#a8ff35'],
-                    ['blue', 'Electric blue', '#55a7ff'],
+                    ['blue', 'Blue', '#55a7ff'],
                     ['violet', 'Violet', '#aa7cff'],
                     ['coral', 'Coral', '#ff7d6b'],
                   ].map(([value, label, color]) => (
@@ -532,7 +532,7 @@ function NotebookLoading() {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         className="loading-logo"
-        src="/brand/logo.webp"
+        src="/brand/repwise-mark.png"
         alt=""
         width="88"
         height="88"
