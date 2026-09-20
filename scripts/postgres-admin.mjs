@@ -53,7 +53,7 @@ try {
       }
       await client.query('COMMIT');
       console.log(
-        'Gym Notebook schema ready. Existing non-Gym tables were not changed.',
+        'Repwise schema ready. Existing non-Repwise tables were not changed.',
       );
     } catch (error) {
       await client.query('ROLLBACK');

@@ -93,7 +93,7 @@ export function History({
     ];
   });
   return (
-    <section>
+    <section className="app-section history-page">
       <p className="eyebrow">YOUR TRAINING RECORD</p>
       <h1>History</h1>
       <div className="history-summary-grid">

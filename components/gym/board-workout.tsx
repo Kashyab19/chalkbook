@@ -8,7 +8,15 @@ import {
 } from 'react';
 import { Button } from '@/components/boardui/base/buttons/button';
 import { Input } from '@/components/boardui/base/input/input';
-import { RiAddLine, RiChat1Line, RiCheckLine } from '@remixicon/react';
+import {
+  RiAddLine,
+  RiArrowRightLine,
+  RiChat1Line,
+  RiCheckLine,
+  RiMore2Line,
+  RiPauseLine,
+  RiTimeLine,
+} from '@remixicon/react';
 import {
   type Session,
   type SetLog,
@@ -22,23 +30,22 @@ import { type Action, validSet } from '@/lib/operations';
 import { cx } from '@/lib/boardui-cx';
 import { useDeviceDraft } from '@/hooks/use-device-draft';
 import { ExerciseArt } from './exercise-art';
-const card =
-  'rounded-3xl border border-border-button-default bg-background-primary-default p-4 sm:p-6';
 export function BoardWorkout({
   session,
   sessions,
   unit,
+  restSeconds,
   save,
   saving,
 }: {
   session: Session;
   sessions: Session[];
   unit: string;
+  restSeconds: number;
   save: (action: Action | Action[]) => Promise<boolean>;
   saving: boolean;
 }) {
-  const [expanded, setExpanded] = useState<number[]>([]),
-    [undo, setUndo] = useState<{
+  const [undo, setUndo] = useState<{
       exercise: number;
       set: number;
       value: SetLog;
@@ -99,6 +106,14 @@ export function BoardWorkout({
         : session.exercises[nextJ].entries.findIndex((s) => !s.completed),
     next = nextJ < 0 ? null : session.exercises[nextJ].entries[nextI];
   const finished = !!session.completedAt;
+  const currentExercise = nextJ < 0 ? null : session.exercises[nextJ];
+  const currentPrevious = currentExercise
+    ? previous(sessions, currentExercise.id, session.date)
+    : null;
+  const nextExercise = session.exercises.find(
+    (exercise, index) =>
+      index > nextJ && exercise.entries.some((entry) => !entry.completed),
+  );
   const mark = (j: number, i: number) => {
     const value = session.exercises[j].entries[i];
     void run(
@@ -117,11 +132,7 @@ export function BoardWorkout({
           setUndo({ exercise: j, set: i, value });
           setNoteTarget({ exercise: j, set: i });
           setNoteOpen(false);
-          setUntil(Date.now() + 90000);
-          if (
-            session.exercises[j].entries.every((s, k) => k === i || s.completed)
-          )
-            setExpanded((old) => old.filter((x) => x !== j));
+          setUntil(Date.now() + restSeconds * 1000);
         } else {
           setUndo(null);
           setUntil(0);
@@ -146,321 +157,216 @@ export function BoardWorkout({
     );
   return (
     <div
-      className="flex min-w-0 flex-col gap-4"
+      className="focus-workout"
       onPointerUpCapture={recordInteraction}
       onKeyDownCapture={recordInteraction}
     >
-      <div className="workout-summary flex flex-wrap items-center justify-between gap-3">
-        <p className="text-body-regular">
-          {done}/{total} sets done{finished ? ' · finished' : ''}
-        </p>
+      <header className="focus-session-header">
+        <div>
+          <p className="focus-session-name">{session.name}</p>
+          <p className="focus-session-date">
+            {new Intl.DateTimeFormat('en', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            }).format(new Date(`${session.date}T12:00:00`))}
+          </p>
+        </div>
+        <div className="focus-progress" aria-label={`${done} of ${total} sets done`}>
+          <span>{done} / {total}</span>
+          <div><i style={{ width: `${total ? (done / total) * 100 : 0}%` }} /></div>
+        </div>
         <Button
+          iconOnly
           variant="secondary"
+          leadingIcon={RiMore2Line}
+          className="focus-menu"
+          aria-label={finished ? 'Resume workout' : 'Finish workout'}
           disabled={busy || saving || (!finished && !done)}
           onClick={finish}
-        >
-          {finished ? 'Resume' : 'Finish'}
-        </Button>
-      </div>
-      {session.exercises
-        .map((ex, j) => ({ ex, j }))
-        .sort(
-          (a, b) =>
-            Number(a.ex.entries.every((s) => s.completed)) -
-            Number(b.ex.entries.every((s) => s.completed)),
-        )
-        .map(({ ex, j }) => {
-          const complete = ex.entries.every((s) => s.completed),
-            open = !complete || expanded.includes(j);
-          const prev = previous(sessions, ex.id, session.date);
-          const suggestion = prev ? target(ex, prev.exercise.entries) : null;
-          return (
-            <article
-              key={ex.id}
-              className={cx(
-                card,
-                'workout-card',
-                complete && 'workout-card-complete',
-                nextJ === j && !finished && 'ring-2 ring-accent-400',
-              )}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <ExerciseArt
-                    name={ex.name}
-                    className="workout-exercise-art"
-                  />
-                  <div className="min-w-0">
-                    <h2 className="text-headline-medium">{ex.name}</h2>
-                    <p className="text-caption-1-regular text-text-secondary">
-                      {ex.entries.filter((s) => s.completed).length}/
-                      {ex.entries.length} done · {ex.min}–{ex.max} reps
-                    </p>
-                  </div>
-                </div>
-                {complete && (
-                  <Button
-                    variant="secondary"
-                    aria-expanded={open}
-                    aria-label={`${open ? 'Collapse' : 'Expand'} ${ex.name}`}
-                    onClick={() =>
-                      setExpanded((old) =>
-                        old.includes(j)
-                          ? old.filter((x) => x !== j)
-                          : [...old, j],
-                      )
-                    }
-                  >
-                    {open ? 'Hide' : 'Show'}
-                  </Button>
-                )}
-              </div>
-              {open && (
-                <div className="mt-4">
-                  <div className="workout-grid text-caption-1-medium text-text-secondary">
-                    <span>Set</span>
-                    <span>{unit}</span>
-                    <span>Reps</span>
-                    <span>Done</span>
-                  </div>
-                  {ex.entries.map((s, i) => (
-                    <div
-                      id={`set-${j}-${i}`}
-                      key={i}
-                      className={cx(
-                        'my-2 rounded-xl',
-                        s.completed && 'bg-background-secondary-default',
-                        j === nextJ &&
-                          i === nextI &&
-                          !finished &&
-                          'current-set',
-                      )}
-                    >
-                      <div className="workout-grid">
-                        <span className="text-body-medium text-center">
-                          {i + 1}
-                          {i >= ex.sets && (
-                            <span className="block text-caption-1-regular">
-                              extra
-                            </span>
-                          )}
-                        </span>
-                        <SetField
-                          key={`${session.id}-${j}-${i}-weight-${unit}`}
-                          draftKey={`${session.id}-${j}-${i}-weight-${unit}`}
-                          label={`${ex.name} set ${i + 1} weight`}
-                          value={
-                            s.weightKg === null
-                              ? null
-                              : display(s.weightKg, unit)
-                          }
-                          max={display(2000, unit)}
-                          disabled={finished}
-                          onSave={(n) =>
-                            save({
-                              type: 'set',
-                              id: session.id,
-                              exercise: j,
-                              set: i,
-                              value: {
-                                ...s,
-                                weightKg: n === null ? null : toKg(n, unit),
-                                completed: false,
-                              },
-                            })
-                          }
-                        />
-                        <SetField
-                          key={`${session.id}-${j}-${i}-reps`}
-                          draftKey={`${session.id}-${j}-${i}-reps`}
-                          label={`${ex.name} set ${i + 1} reps`}
-                          value={s.reps}
-                          max={500}
-                          integer
-                          disabled={finished}
-                          onSave={(n) =>
-                            save({
-                              type: 'set',
-                              id: session.id,
-                              exercise: j,
-                              set: i,
-                              value: { ...s, reps: n, completed: false },
-                            })
-                          }
-                        />
-                        <Button
-                          iconOnly
-                          leadingIcon={RiCheckLine}
-                          className="min-h-11 min-w-11"
-                          aria-label={`Complete ${ex.name} set ${i + 1}`}
-                          aria-pressed={s.completed}
-                          variant={s.completed ? 'primary' : 'secondary'}
-                          disabled={
-                            finished ||
-                            busy ||
-                            saving ||
-                            (!s.completed &&
-                              !validSet({ ...s, completed: true }))
-                          }
-                          onClick={() => mark(j, i)}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {!finished && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Button
-                    variant="secondary"
-                    leadingIcon={RiAddLine}
-                    aria-label={`Add set to ${ex.name}`}
-                    disabled={busy || saving || ex.entries.length >= 30}
-                    onClick={() =>
-                      void run(
-                        {
-                          type: 'addSet',
-                          id: session.id,
-                          exercise: j,
-                          set: ex.entries.length,
-                          value: {
-                            weightKg: ex.entries.at(-1)?.weightKg ?? null,
-                            reps: ex.entries.at(-1)?.reps ?? null,
-                            completed: false,
-                          },
-                        },
-                        () =>
-                          setExpanded((old) =>
-                            old.includes(j) ? old : [...old, j],
-                          ),
-                      )
-                    }
-                  >
-                    Add set
-                  </Button>
-                  {ex.entries.length > ex.sets &&
-                    !ex.entries.at(-1)!.completed && (
-                      <Button
-                        variant="secondary"
-                        disabled={busy || saving}
-                        aria-label={`Remove extra set from ${ex.name}`}
-                        onClick={() =>
-                          void run({
-                            type: 'removeSet',
-                            id: session.id,
-                            exercise: j,
-                            set: ex.entries.length - 1,
-                          })
-                        }
-                      >
-                        Remove extra
-                      </Button>
-                    )}
-                </div>
-              )}
-              {suggestion?.increase && (
-                <details className="mt-3 text-caption-1-regular text-text-secondary">
-                  <summary>Progression</summary>
-                  <p>
-                    Previous sets reached {ex.max} reps. Increase weight only
-                    when ready.
-                  </p>
-                </details>
-              )}
-            </article>
-          );
-        })}
-      {!finished && (
-        <div className="workout-dock sticky z-20 rounded-2xl border border-border-button-default bg-background-primary-default p-3 shadow-lg">
-          <RestTimer until={until} setUntil={setUntil} />
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="min-w-0 flex-1">
-              <p className="text-body-medium">
-                {next
-                  ? `${session.exercises[nextJ].name} · set ${nextI + 1}`
-                  : 'All sets done'}
-              </p>
-              <p className="text-caption-1-regular">
-                {next
-                  ? `${next.weightKg === null ? '?' : display(next.weightKg, unit)} ${unit} × ${next.reps ?? '?'} reps`
-                  : ''}
-              </p>
-            </div>
-            <Button
-              leadingIcon={RiCheckLine}
-              disabled={
-                busy ||
-                saving ||
-                (!!next && !validSet({ ...next, completed: true }))
-              }
-              onClick={() => (next ? mark(nextJ, nextI) : finish())}
-            >
-              {next ? 'Log set' : 'Finish'}
-            </Button>
-            {undo && (
-              <Button
-                variant="secondary"
-                disabled={busy || saving}
-                onClick={() =>
-                  void run({ type: 'set', id: session.id, ...undo }, () => {
-                    setUndo(null);
-                    setUntil(0);
-                  })
-                }
-              >
-                Undo
-              </Button>
-            )}
-            {noteTarget && (
-              <Button
-                variant="secondary"
-                leadingIcon={RiChat1Line}
-                disabled={busy || saving}
-                aria-expanded={noteOpen}
-                onClick={() => setNoteOpen((open) => !open)}
-              >
-                {session.exercises[noteTarget.exercise].entries[noteTarget.set]
-                  .note
-                  ? 'Edit note'
-                  : 'Note last set'}
-              </Button>
-            )}
-          </div>
-          {noteTarget && noteOpen && (
-            <SetNote
-              key={`${session.id}-${noteTarget.exercise}-${noteTarget.set}-${session.exercises[noteTarget.exercise].entries[noteTarget.set].note ?? ''}`}
-              exercise={session.exercises[noteTarget.exercise].name}
-              set={noteTarget.set + 1}
-              note={
-                session.exercises[noteTarget.exercise].entries[noteTarget.set]
-                  .note ?? ''
-              }
-              disabled={busy || saving}
-              onSave={async (note) => {
-                const saved = await save({
-                  type: 'set',
-                  id: session.id,
-                  exercise: noteTarget.exercise,
-                  set: noteTarget.set,
-                  value: {
-                    ...session.exercises[noteTarget.exercise].entries[
-                      noteTarget.set
-                    ],
-                    note: note || undefined,
-                  },
-                });
-                if (saved) setNoteOpen(false);
-                return saved;
-              }}
-            />
-          )}
-          {next && !validSet({ ...next, completed: true }) && (
-            <p className="mt-2 text-caption-1-regular text-text-secondary">
-              Enter weight and reps.
+        />
+      </header>
+
+      {currentExercise && next ? (
+        <main className="focus-current" aria-live="polite">
+          <ExerciseArt name={currentExercise.name} className="focus-hero-art" />
+          <h2>{currentExercise.name}</h2>
+          <p className="focus-set-count">Set {nextI + 1} of {currentExercise.entries.length}</p>
+          {currentPrevious ? (
+            <p className="focus-previous">
+              Last time <strong>
+                {currentPrevious.exercise.entries[nextI]?.weightKg == null
+                  ? '—'
+                  : `${display(currentPrevious.exercise.entries[nextI].weightKg!, unit)} ${unit}`}
+                {' × '}
+                {currentPrevious.exercise.entries[nextI]?.reps ?? '—'}
+              </strong>
             </p>
+          ) : (
+            <p className="focus-previous">First time · set your baseline</p>
           )}
+
+          <div className="focus-fields">
+            <FocusField
+              label="Weight"
+              unit={unit}
+              value={next.weightKg === null ? null : display(next.weightKg, unit)}
+              step={unit === 'lb' ? 5 : 2.5}
+              max={display(2000, unit)}
+              disabled={finished || busy || saving}
+              onSave={(value) => save({
+                type: 'set', id: session.id, exercise: nextJ, set: nextI,
+                value: { ...next, weightKg: value === null ? null : toKg(value, unit), completed: false },
+              })}
+            />
+            <FocusField
+              label="Reps"
+              unit="reps"
+              value={next.reps}
+              step={1}
+              max={500}
+              integer
+              disabled={finished || busy || saving}
+              onSave={(value) => save({
+                type: 'set', id: session.id, exercise: nextJ, set: nextI,
+                value: { ...next, reps: value, completed: false },
+              })}
+            />
+          </div>
+
+          <button
+            className="focus-log-button"
+            disabled={busy || saving || !validSet({ ...next, completed: true })}
+            onClick={() => mark(nextJ, nextI)}
+          >
+            <span>Log set</span><RiArrowRightLine aria-hidden />
+          </button>
+          {!validSet({ ...next, completed: true }) ? (
+            <p className="focus-help">Enter weight and reps to log this set.</p>
+          ) : null}
+        </main>
+      ) : (
+        <div className="focus-complete">
+          <RiCheckLine aria-hidden />
+          <h2>Workout complete</h2>
+          <p>{done} sets logged. Strong work.</p>
+          <Button onClick={finish}>{finished ? 'Resume workout' : 'Finish workout'}</Button>
         </div>
       )}
+
+      {until ? <RestTimer until={until} setUntil={setUntil} /> : null}
+
+      {nextExercise ? (
+        <section className="focus-up-next" aria-label="Up next">
+          <p>Up next</p>
+          <div>
+            <ExerciseArt name={nextExercise.name} className="focus-next-art" />
+            <strong>{nextExercise.name}</strong>
+            <RiArrowRightLine aria-hidden />
+          </div>
+        </section>
+      ) : null}
+
+      {undo || noteTarget ? (
+        <div className="focus-quick-actions">
+          {undo ? (
+            <Button variant="ghost" disabled={busy || saving} onClick={() =>
+              void run({ type: 'set', id: session.id, ...undo }, () => {
+                setUndo(null); setUntil(0);
+              })
+            }>Undo last set</Button>
+          ) : null}
+          {noteTarget ? (
+            <Button variant="ghost" leadingIcon={RiChat1Line} disabled={busy || saving}
+              aria-expanded={noteOpen} onClick={() => setNoteOpen((open) => !open)}>
+              Add note
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+      {noteTarget && noteOpen ? (
+        <SetNote
+          key={`${session.id}-${noteTarget.exercise}-${noteTarget.set}`}
+          exercise={session.exercises[noteTarget.exercise].name}
+          set={noteTarget.set + 1}
+          note={session.exercises[noteTarget.exercise].entries[noteTarget.set].note ?? ''}
+          disabled={busy || saving}
+          onSave={async (note) => {
+            const saved = await save({
+              type: 'set', id: session.id, exercise: noteTarget.exercise, set: noteTarget.set,
+              value: { ...session.exercises[noteTarget.exercise].entries[noteTarget.set], note: note || undefined },
+            });
+            if (saved) setNoteOpen(false);
+            return saved;
+          }}
+        />
+      ) : null}
+
+      <details className="focus-full-workout">
+        <summary>Full workout <span>{done}/{total} sets</span></summary>
+        <div className="focus-exercise-list">
+          {session.exercises.map((exercise, j) => (
+            <article key={exercise.id}>
+              <div className="focus-exercise-heading">
+                <ExerciseArt name={exercise.name} className="focus-list-art" />
+                <div><strong>{exercise.name}</strong><span>{exercise.min}–{exercise.max} reps</span></div>
+                <b>{exercise.entries.filter((entry) => entry.completed).length}/{exercise.entries.length}</b>
+              </div>
+              {exercise.entries.map((entry, i) => (
+                <div className={cx('focus-set-row', entry.completed && 'is-complete')} key={i}>
+                  <span>{i + 1}</span>
+                  <SetField draftKey={`${session.id}-${j}-${i}-weight-${unit}`} label={`${exercise.name} set ${i + 1} weight`}
+                    value={entry.weightKg === null ? null : display(entry.weightKg, unit)} max={display(2000, unit)} disabled={finished}
+                    onSave={(value) => save({ type: 'set', id: session.id, exercise: j, set: i, value: { ...entry, weightKg: value === null ? null : toKg(value, unit), completed: false } })} />
+                  <SetField draftKey={`${session.id}-${j}-${i}-reps`} label={`${exercise.name} set ${i + 1} reps`}
+                    value={entry.reps} max={500} integer disabled={finished}
+                    onSave={(value) => save({ type: 'set', id: session.id, exercise: j, set: i, value: { ...entry, reps: value, completed: false } })} />
+                  <Button iconOnly leadingIcon={RiCheckLine} aria-label={`Complete ${exercise.name} set ${i + 1}`}
+                    aria-pressed={entry.completed} variant={entry.completed ? 'primary' : 'secondary'}
+                    disabled={finished || busy || saving || (!entry.completed && !validSet({ ...entry, completed: true }))}
+                    onClick={() => mark(j, i)} />
+                </div>
+              ))}
+              {!finished ? <Button variant="ghost" leadingIcon={RiAddLine} disabled={busy || saving || exercise.entries.length >= 30}
+                onClick={() => void run({ type: 'addSet', id: session.id, exercise: j, set: exercise.entries.length,
+                  value: { weightKg: exercise.entries.at(-1)?.weightKg ?? null, reps: exercise.entries.at(-1)?.reps ?? null, completed: false } })}>Add set</Button> : null}
+              {previous(sessions, exercise.id, session.date) && target(exercise, previous(sessions, exercise.id, session.date)!.exercise.entries).increase ? (
+                <p className="focus-progression">Previous sets reached the rep target. Increase weight when ready.</p>
+              ) : null}
+            </article>
+          ))}
+        </div>
+      </details>
+    </div>
+  );
+}
+
+function FocusField({ label, unit, value, step, max, integer = false, disabled, onSave }: {
+  label: string; unit: string; value: number | null; step: number; max: number;
+  integer?: boolean; disabled: boolean; onSave: (value: number | null) => Promise<boolean>;
+}) {
+  const update = (delta: number) => {
+    const next = Math.min(max, Math.max(0, (value ?? 0) + delta));
+    void onSave(integer ? Math.round(next) : Number(next.toFixed(2)));
+  };
+  return (
+    <div className="focus-field">
+      <span>{label}</span>
+      <div>
+        <button aria-label={`Decrease ${label.toLowerCase()}`} disabled={disabled} onClick={() => update(-step)}>−</button>
+        <label>
+          <span className="sr-only">{label}</span>
+          <input inputMode={integer ? 'numeric' : 'decimal'} value={value ?? ''} placeholder="—" disabled={disabled}
+            onChange={(event) => {
+              const text = event.target.value;
+              if (text === '') { void onSave(null); return; }
+              const number = Number(text);
+              if (Number.isFinite(number) && number >= 0 && number <= max && (!integer || Number.isInteger(number))) void onSave(number);
+            }} />
+          <small>{unit}</small>
+        </label>
+        <button aria-label={`Increase ${label.toLowerCase()}`} disabled={disabled} onClick={() => update(step)}>+</button>
+      </div>
     </div>
   );
 }
@@ -588,23 +494,18 @@ function RestTimer({
   const seconds = Math.max(0, Math.ceil((until - now) / 1000));
   if (!until) return null;
   return (
-    <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-separator-border pb-2">
-      <span className="text-body-medium tabular-nums">
-        {seconds
-          ? `Rest ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
-          : 'Rest done'}
-      </span>
-      <div className="flex gap-2">
-        <Button
-          variant="secondary"
-          onClick={() => setUntil(Math.max(Date.now(), until) + 30000)}
-        >
-          +30s
-        </Button>
-        <Button variant="secondary" onClick={() => setUntil(0)}>
-          Skip
-        </Button>
+    <div className="focus-rest" role="timer" aria-live="polite">
+      <RiTimeLine aria-hidden />
+      <div>
+        <span>Rest</span>
+        <strong className="tabular-nums">
+          {seconds
+            ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
+            : 'Done'}
+        </strong>
       </div>
+      <button aria-label="Add 30 seconds" onClick={() => setUntil(Math.max(Date.now(), until) + 30000)}>+30s</button>
+      <button aria-label="Skip rest" onClick={() => setUntil(0)}><RiPauseLine aria-hidden /></button>
     </div>
   );
 }

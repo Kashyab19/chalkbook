@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Gym Notebook",
-  "short_name": "Gym Notebook",
+  "name": "Repwise",
+  "short_name": "Repwise",
   "description": "Your private workout and body-weight notebook, available offline.",
   "start_url": "/",
   "scope": "/",

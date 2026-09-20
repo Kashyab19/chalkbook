@@ -107,9 +107,10 @@ export function BodyWeight({
     }
   };
   return (
-    <div className="flex flex-col gap-6 pt-6">
+    <section className="app-section body-weight-page flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
+          <p className="eyebrow">TRACK THE TREND</p>
           <h1 className="text-title-1-medium">Body weight</h1>
         </div>
       </div>
@@ -376,7 +377,7 @@ export function BodyWeight({
           )}
         </section>
       </div>
-    </div>
+    </section>
   );
 }
 function Stat({

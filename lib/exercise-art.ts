@@ -1,29 +1,29 @@
 const exerciseArt = [
   {
-    file: 'bench-press.webp',
+    file: 'bench-press.png',
     terms: ['bench press', 'chest press', 'incline dumbbell press'],
   },
-  { file: 'squat.webp', terms: ['squat'] },
-  { file: 'deadlift.webp', terms: ['deadlift'] },
-  { file: 'overhead-press.webp', terms: ['overhead press', 'shoulder press'] },
+  { file: 'squat.png', terms: ['squat'] },
+  { file: 'deadlift.png', terms: ['deadlift'] },
+  { file: 'overhead-press.png', terms: ['overhead press', 'shoulder press'] },
   {
-    file: 'pull-up.webp',
+    file: 'pull-up.png',
     terms: ['pull-up', 'pull up', 'pulldown', 'pull down'],
   },
-  { file: 'barbell-row.webp', terms: ['row'] },
-  { file: 'leg-press.webp', terms: ['leg press', 'leg extension', 'leg curl'] },
-  { file: 'bicep-curl.webp', terms: ['bicep', 'biceps', 'curl'] },
+  { file: 'barbell-row.png', terms: ['row'] },
+  { file: 'leg-press.png', terms: ['leg press', 'leg extension', 'leg curl'] },
+  { file: 'bicep-curl.png', terms: ['bicep', 'biceps', 'curl'] },
   {
-    file: 'tricep-pushdown.webp',
+    file: 'tricep-pushdown.png',
     terms: ['tricep', 'triceps', 'pushdown', 'push down'],
   },
-  { file: 'lunge.webp', terms: ['lunge', 'split squat'] },
+  { file: 'lunge.png', terms: ['lunge', 'split squat'] },
   {
-    file: 'lateral-raise.webp',
+    file: 'lateral-raise.png',
     terms: ['lateral raise', 'calf raise', 'raise', 'delt fly', 'face pull'],
   },
   {
-    file: 'plank.webp',
+    file: 'plank.png',
     terms: ['plank', 'core', 'abductor', 'adductor', 'glute bridge'],
   },
 ] as const;
@@ -33,5 +33,5 @@ export function exerciseArtPath(name: string) {
   const match = exerciseArt.find(({ terms }) =>
     terms.some((term) => normalized.includes(term)),
   );
-  return match ? `/exercise-icons/${match.file}` : null;
+  return match ? `/exercise-icons-v2/${match.file}` : null;
 }

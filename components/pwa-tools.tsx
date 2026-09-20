@@ -114,6 +114,7 @@ export function PwaTools({
       onUpdateReady?.(null);
     };
   }, []);
+  if (!open) return null;
   async function exportBackup() {
     try {
       const current = await transact();
@@ -136,7 +137,7 @@ export function PwaTools({
       const url = URL.createObjectURL(file);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `gym-notebook-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `repwise-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 30000);
       setMessage(
@@ -162,12 +163,12 @@ export function PwaTools({
     }
   }
   return (
-    <details
-      className={`app-tools${open ? '' : ' settings-closed'}`}
-      open={open}
-    >
-      <summary>Install, backup &amp; app settings</summary>
-      <h2>Install on your iPhone</h2>
+    <section className="app-tools settings-tools settings-section" aria-labelledby="device-settings-title">
+      <div className="settings-section-heading">
+        <div><span>02</span><h2 id="device-settings-title">Data &amp; device</h2></div>
+        <p>Offline access, updates, and private backups.</p>
+      </div>
+      <h3>Install on your iPhone</h3>
       <p>
         Open this address in Safari, tap Share, then Add to Home Screen. Keep
         Open as Web App enabled if shown, then tap Add.
@@ -250,6 +251,6 @@ export function PwaTools({
         can.
       </p>
       <output>{message}</output>
-    </details>
+    </section>
   );
 }

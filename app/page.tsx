@@ -11,17 +11,21 @@ import {
 } from '@/components/boardui/base/tabs/tabs';
 import {
   RiCheckboxCircleLine,
+  RiArrowRightLine,
+  RiCalendarScheduleLine,
   RiErrorWarningLine,
+  RiHistoryLine,
+  RiHome5Line,
   RiLoader4Line,
-  RiMoonLine,
   RiSave3Line,
   RiSettings3Line,
-  RiSunLine,
+  RiScales3Line,
 } from '@remixicon/react';
 import { Picker } from '@/components/gym/controls';
 import { History } from '@/components/gym/history';
 import { FrictionInsights } from '@/components/gym/friction-insights';
 import { Program } from '@/components/gym/program';
+import { ExerciseArt } from '@/components/gym/exercise-art';
 import {
   days,
   defaultProgram,
@@ -45,22 +49,23 @@ export default function Home() {
   const data = notebook.data ?? blank,
     loaded = !!notebook.data,
     { save, status } = notebook;
-  const [dark, setDark] = useState(false);
   const [tab, setTab] = useState('today'),
     [date, setDate] = useState(''),
     [chosen, setChosen] = useState(''),
     [unit, setUnit] = useState('lb'),
-    [settingsOpen, setSettingsOpen] = useState(false),
+    [restSeconds, setRestSeconds] = useState(60),
     [applyUpdate, setApplyUpdate] = useState<(() => void) | null>(null);
   useEffect(() => {
     // Client-only date initialization avoids timezone differences during Sites hydration.
     // eslint-disable-next-line react/react-compiler
     setDate(dateKey());
+    document.title = 'Repwise';
     try {
       setUnit(localStorage.getItem('gym-unit') || 'lb');
-      const dark = localStorage.getItem('gym-theme') === 'dark';
-      setDark(dark);
-      document.documentElement.classList.toggle('dark', dark);
+      const savedRest = Number(localStorage.getItem('gym-rest-seconds'));
+      setRestSeconds([30, 45, 60, 90, 120].includes(savedRest) ? savedRest : 60);
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('gym-theme', 'dark');
     } catch {}
     let lastToday = dateKey();
     const foreground = () => {
@@ -84,6 +89,12 @@ export default function Home() {
     setUnit(v);
     try {
       localStorage.setItem('gym-unit', v);
+    } catch {}
+  }
+  function changeRest(seconds: number) {
+    setRestSeconds(seconds);
+    try {
+      localStorage.setItem('gym-rest-seconds', String(seconds));
     } catch {}
   }
   const statusIcon =
@@ -247,7 +258,7 @@ export default function Home() {
           {/* Static local art is already compressed and dimensioned. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/logo.webp" alt="" width="44" height="44" />
-          <strong>Gym Notebook</strong>
+          <strong>Repwise</strong>
         </header>
         <div className="auth-content">
           <SignIn onSuccess={notebook.sync} />
@@ -265,7 +276,7 @@ export default function Home() {
         <div className="board-brand">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/logo.webp" alt="" width="40" height="40" />
-          <strong>Gym Notebook</strong>
+          <strong>Repwise</strong>
         </div>
         <span
           className="save-status header-status"
@@ -290,78 +301,29 @@ export default function Home() {
         <Button
           variant="secondary"
           iconOnly
-          leadingIcon={dark ? RiSunLine : RiMoonLine}
-          aria-label="Toggle dark mode"
+          leadingIcon={RiSettings3Line}
+          className="header-settings-button"
+          aria-label="Open settings"
+          aria-pressed={tab === 'settings'}
           onClick={() => {
-            setDark(!dark);
-            document.documentElement.classList.toggle('dark', !dark);
-            try {
-              localStorage.setItem('gym-theme', !dark ? 'dark' : 'light');
-            } catch {}
+            setTab('settings');
+            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
           }}
         />
-        <Button
-          variant="secondary"
-          iconOnly
-          leadingIcon={RiSettings3Line}
-          aria-label="Settings"
-          aria-expanded={settingsOpen}
-          onClick={() => setSettingsOpen((open) => !open)}
-        />
       </header>
-      {settingsOpen && (
-        <section className="settings-panel paper" aria-label="Settings">
-          <div className="row-between">
-            <h2>Settings</h2>
-            <button
-              className="text-button"
-              onClick={() => setSettingsOpen(false)}
-            >
-              Close
-            </button>
-          </div>
-          <label className="settings-unit-label">Weight units</label>
-          <div className="units" aria-label="Weight units">
-            {['lb', 'kg'].map((u) => (
-              <button
-                key={u}
-                aria-pressed={unit === u}
-                onClick={() => changeUnit(u)}
-              >
-                {u}
-              </button>
-            ))}
-          </div>
-          <button
-            className="text-button danger"
-            onClick={async () => {
-              await fetch('/api/auth', {
-                method: 'DELETE',
-                credentials: 'same-origin',
-              });
-              location.reload();
-            }}
-          >
-            Sign out
-          </button>
-          <FrictionInsights data={data} />
-        </section>
-      )}
       <BoardTabs
         selectedKey={tab}
-        onSelectionChange={(key) => setTab(String(key))}
+        onSelectionChange={(key) => {
+          setTab(String(key));
+          window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        }}
       >
         <BoardTabList aria-label="Notebook sections">
-          {[
-            ['today', 'Today'],
-            ['history', 'History'],
-            ['body', 'Body weight'],
-            ['program', 'Program'],
-          ].map(([id, label]) => (
-            <BoardTab id={id} key={id}>
-              {label}
-            </BoardTab>
-          ))}
+          <BoardTab id="today"><RiHome5Line aria-hidden /><span>Today</span></BoardTab>
+          <BoardTab id="history"><RiHistoryLine aria-hidden /><span>History</span></BoardTab>
+          <BoardTab id="body"><RiScales3Line aria-hidden /><span>Weight</span></BoardTab>
+          <BoardTab id="program"><RiCalendarScheduleLine aria-hidden /><span>Program</span></BoardTab>
+          <BoardTab id="settings" className="settings-nav-tab"><RiSettings3Line aria-hidden /><span>Settings</span></BoardTab>
         </BoardTabList>
         {(notebook.error || notebook.localError) && (
           <div className="error" role="alert">
@@ -411,13 +373,38 @@ export default function Home() {
               session={session}
               sessions={data.sessions}
               unit={unit}
+              restSeconds={restSeconds}
               save={save}
               saving={status === 'Saving on device…'}
             />
           ) : (
-            <p className="muted">
-              {workoutDay?.exercises.length ? 'Loading workout…' : 'Rest day'}
-            </p>
+            <section className="focus-rest-day">
+              <header>
+                <div>
+                  <p>Today</p>
+                  <h2>Rest day</h2>
+                </div>
+                <time dateTime={date}>{date ? new Intl.DateTimeFormat('en', {
+                  month: 'short', day: 'numeric', year: 'numeric',
+                }).format(new Date(`${date}T12:00:00`)) : ''}</time>
+              </header>
+              <ExerciseArt name="Plank" className="rest-day-art" />
+              <div className="rest-day-copy">
+                <span>Recovery is training, too.</span>
+                <h3>Take the win.</h3>
+                <p>Your next session will be ready here. Feeling good? Start an optional workout without changing your schedule.</p>
+              </div>
+              <div className="rest-day-options">
+                <p>Start a workout</p>
+                {data.program.filter((item) => item.exercises.length).map((item) => (
+                  <button key={item.id} onClick={() => setChosen(item.id)}>
+                    <ExerciseArt name={item.exercises[0].name} className="rest-option-art" />
+                    <span><strong>{item.name}</strong><small>{item.exercises.length} exercises</small></span>
+                    <RiArrowRightLine aria-hidden />
+                  </button>
+                ))}
+              </div>
+            </section>
           )}
         </BoardTabPanel>
         <BoardTabPanel id="history">
@@ -451,15 +438,64 @@ export default function Home() {
             onChange={(program) => void save({ type: 'program', program })}
           />
         </BoardTabPanel>
+        <BoardTabPanel id="settings">
+          <section className="app-section settings-page">
+            <p className="eyebrow">YOUR APP</p>
+            <h1>Settings</h1>
+            <p className="settings-lead">Training preferences, device data, and account controls.</p>
+
+            <section className="settings-section" aria-labelledby="training-settings-title">
+              <div className="settings-section-heading">
+                <div><span>01</span><h2 id="training-settings-title">Training</h2></div>
+                <p>Defaults used while logging workouts.</p>
+              </div>
+              <div className="settings-row">
+                <div><strong>Weight units</strong><span>Used throughout workouts and progress.</span></div>
+                <div className="units" aria-label="Weight units">
+                  {['lb', 'kg'].map((u) => (
+                    <button key={u} aria-pressed={unit === u} onClick={() => changeUnit(u)}>{u}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="settings-row settings-row-stack">
+                <div><strong>Rest timer</strong><span>Starts automatically after every logged set.</span></div>
+                <div className="settings-rest-options" aria-label="Rest timer duration">
+                  {[30, 45, 60, 90, 120].map((seconds) => (
+                    <button key={seconds} aria-pressed={restSeconds === seconds} onClick={() => changeRest(seconds)}>
+                      {seconds < 60 ? `${seconds}s` : `${seconds / 60}m`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <PwaTools
+              data={notebook.data}
+              save={save}
+              pending={notebook.pending}
+              sync={notebook.sync}
+              open
+              onUpdateReady={(apply) => setApplyUpdate(() => apply)}
+            />
+
+            <section className="settings-section" aria-labelledby="account-settings-title">
+              <div className="settings-section-heading">
+                <div><span>03</span><h2 id="account-settings-title">Account</h2></div>
+                <p>Manage this notebook session.</p>
+              </div>
+              <div className="settings-row">
+                <div><strong>Signed-in notebook</strong><span>Your synced workout data stays private.</span></div>
+                <button className="settings-danger" onClick={async () => {
+                  await fetch('/api/auth', { method: 'DELETE', credentials: 'same-origin' });
+                  location.reload();
+                }}>Sign out</button>
+              </div>
+            </section>
+
+            <FrictionInsights data={data} />
+          </section>
+        </BoardTabPanel>
       </BoardTabs>
-      <PwaTools
-        data={notebook.data}
-        save={save}
-        pending={notebook.pending}
-        sync={notebook.sync}
-        open={settingsOpen}
-        onUpdateReady={(apply) => setApplyUpdate(() => apply)}
-      />
     </main>
   );
 }
@@ -475,7 +511,7 @@ function NotebookLoading() {
         height="88"
       />
       <div>
-        <strong>Gym Notebook</strong>
+        <strong>Repwise</strong>
         <p>Opening your training log</p>
       </div>
     </main>

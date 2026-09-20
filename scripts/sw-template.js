@@ -13,7 +13,7 @@ self.addEventListener('install', (event) => {
           !shell.ok ||
           shell.redirected ||
           !shell.headers.get('content-type')?.includes('text/html') ||
-          !(await shell.clone().text()).includes('Gym Notebook')
+          !(await shell.clone().text()).includes('Repwise')
         )
           throw Error('Notebook shell unavailable');
         await cache.addAll(ASSETS);

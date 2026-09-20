@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     // idempotency and make the new offline conflict policy unreliable.
     if (!op || typeof op.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(op.id))
       return response(
-        { error: 'Update Gym Notebook before logging more changes.' },
+        { error: 'Update Repwise before logging more changes.' },
         409,
       );
     validateAction(op.action);
