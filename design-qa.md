@@ -115,6 +115,12 @@ The implementation preserves the source hierarchy: compact session title/progres
 - Fix: reduced the desktop/tablet hero slot from 330px to 276px and increased the title/action gap to 14px, leaving the already compact small-phone artwork sizing intact.
 - Post-fix evidence: the normal desktop viewport shows a visibly shorter hero section and clear separation between “Back Squat” and “Swap”; at 375 × 667, all logging controls remain above the floating navigation and the browser console reports no warnings or errors.
 
+### Iteration 15
+
+- [P1] The sign-in screen used a generic blue security-card aesthetic that was disconnected from Repwise’s 3D illustration system, lime interaction color, typography, and mobile density.
+- Fix: rebuilt the unauthenticated entry as a two-part Repwise welcome on desktop, using the existing 3D mascot, product-specific messaging, a focused dark form card, lime primary action, clearer privacy language, and a compact single-column mobile treatment.
+- Post-fix evidence: an isolated unauthenticated preview shows the full two-column composition on desktop; at 375 × 667 the branded intro and complete sign-in card fit in one viewport (667px document height), fields retain their accessible labels, and the browser console reports no warnings or errors.
+
 ## Primary interactions tested
 
 - Changed workout date to a scheduled training day.

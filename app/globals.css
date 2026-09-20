@@ -1206,7 +1206,7 @@ output {
 /* Private sign-in entry, separate from workout navigation. */
 .auth-page {
   min-height: calc(100dvh - env(safe-area-inset-top));
-  max-width: 1120px;
+  max-width: 1180px;
   margin: auto;
   padding: 0 max(24px, env(safe-area-inset-right))
     max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
@@ -1287,40 +1287,67 @@ output {
 }
 .auth-content {
   width: 100%;
-  max-width: 440px;
+  max-width: 940px;
   margin: auto;
   padding: 32px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  align-items: center;
+  gap: clamp(48px, 8vw, 104px);
+}
+.auth-showcase {
+  min-width: 0;
+}
+.auth-showcase img {
+  width: 184px;
+  height: 184px;
+  margin: 0 0 26px -16px;
+  object-fit: contain;
+  filter: drop-shadow(0 24px 30px rgb(0 0 0 / .42));
+}
+.auth-showcase .eyebrow {
+  margin: 0 0 14px;
+  color: var(--app-accent-500, #9cff2e);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: .16em;
+}
+.auth-showcase h1 {
+  max-width: 520px;
+  margin: 0;
+  color: #fafaf6;
+  font-size: clamp(42px, 5vw, 64px);
+  line-height: .98;
+  letter-spacing: -.055em;
+}
+.auth-showcase > p:last-child {
+  max-width: 430px;
+  margin: 22px 0 0;
+  color: #adb3ae;
+  font-size: 16px;
+  line-height: 1.6;
 }
 .sign-in-card {
-  background: #fff;
-  border: 1px solid #dce5df;
-  border-radius: 20px;
-  padding: 36px;
-  box-shadow: 0 12px 36px #183b2810;
+  background: #151716;
+  border: 1px solid #303330;
+  border-radius: 28px;
+  padding: 32px;
+  box-shadow: 0 24px 70px rgb(0 0 0 / .42), inset 0 1px 0 rgb(255 255 255 / .035);
 }
 .sign-in-heading {
-  margin-bottom: 30px;
-}
-.auth-lock {
-  width: 48px;
-  height: 48px;
-  display: grid;
-  place-items: center;
-  background: #eaf2ed;
-  color: #176249;
-  border-radius: 14px;
   margin-bottom: 24px;
 }
 .sign-in-heading .eyebrow {
   font-size: 10px;
-  letter-spacing: 1.8px;
-  color: #567162;
-  margin-bottom: 12px;
+  letter-spacing: .16em;
+  color: var(--app-accent-500, #9cff2e);
+  margin-bottom: 10px;
 }
 .sign-in-heading h1 {
-  font-size: 34px;
-  letter-spacing: -1.2px;
-  margin-bottom: 8px;
+  color: #fafaf6;
+  font-size: 38px;
+  letter-spacing: -1.8px;
+  margin-bottom: 7px;
 }
 .sign-in-heading p:last-child {
   font-size: 15px;
@@ -1328,20 +1355,21 @@ output {
 }
 .sign-in-card label {
   gap: 9px;
-  margin-top: 20px;
+  margin-top: 17px;
   font-size: 14px;
   font-weight: 600;
 }
 .sign-in-card input {
   width: 100%;
   min-height: 52px;
-  background: #fafcfb;
-  border-color: #dce5df;
+  background: #0f1110;
+  border-color: #343735;
+  color: #f7f7f2;
   padding: 14px;
   font-weight: 400;
 }
 .sign-in-card input::placeholder {
-  color: #76847d;
+  color: #777d78;
 }
 .password-field {
   position: relative;
@@ -1368,9 +1396,12 @@ output {
   justify-content: center;
   gap: 12px;
   width: 100%;
-  min-height: 52px;
-  margin-top: 28px;
-  border-radius: 10px;
+  min-height: 56px;
+  margin-top: 24px;
+  border-radius: 17px;
+  background: var(--app-accent-500, #9cff2e) !important;
+  color: #0b0d0b !important;
+  font-weight: 850;
 }
 .sign-in-message:empty {
   display: none;
@@ -1382,10 +1413,10 @@ output {
   margin-top: 16px;
 }
 .sign-in-privacy {
-  margin: 22px 0 0;
+  margin: 18px 0 0;
   text-align: center;
-  color: #718077;
-  font-size: 12px;
+  color: #858b86;
+  font-size: 11px;
 }
 .auth-offline-note {
   max-width: 340px;
@@ -1406,13 +1437,36 @@ output {
 }
 @media (max-width: 600px) {
   .auth-brand {
-    min-height: 76px;
+    min-height: 62px;
   }
   .auth-content {
-    padding: 20px 0 28px;
+    max-width: 440px;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 4px 0 18px;
   }
+  .auth-showcase {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: center;
+    gap: 14px;
+  }
+  .auth-showcase img {
+    display: none;
+  }
+  .auth-showcase .eyebrow { margin: 0 0 3px; font-size: 9px; }
+  .auth-showcase h1 { font-size: 22px; line-height: 1; }
+  .auth-showcase h1 br { display: none; }
+  .auth-showcase > p:last-child { display: none; }
+  .sign-in-heading { margin-bottom: 14px; }
+  .sign-in-heading h1 { font-size: 30px; }
+  .sign-in-card label { margin-top: 11px; }
+  .sign-in-card input { min-height: 48px; padding-block: 11px; }
+  .sign-in-submit { min-height: 50px; margin-top: 16px; }
+  .sign-in-privacy { margin-top: 12px; }
   .sign-in-card {
-    padding: 28px 24px;
+    border-radius: 24px;
+    padding: 20px;
   }
 }
 @media (max-width: 360px) {

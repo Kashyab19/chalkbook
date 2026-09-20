@@ -600,7 +600,8 @@ html.dark .password-toggle {
   color: var(--color-text-secondary);
 }
 html.dark .sign-in-submit {
-  background: var(--color-accent-600);
+  background: #a3ff35;
+  color: #0b0d0b;
 }
 @media (max-width: 380px) {
   .board-header {

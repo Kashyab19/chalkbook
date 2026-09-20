@@ -1,5 +1,5 @@
 'use client';
-import { ArrowRight, Eye, EyeOff, LockKeyhole } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { selectDeviceOwner } from '@/lib/device-account';
 export function SignIn({ onSuccess }: { onSuccess: () => Promise<void> }) {
@@ -45,12 +45,9 @@ export function SignIn({ onSuccess }: { onSuccess: () => Promise<void> }) {
       }}
     >
       <div className="sign-in-heading">
-        <span className="auth-lock">
-          <LockKeyhole size={20} aria-hidden="true" />
-        </span>
-        <p className="eyebrow">YOUR PRIVATE SPACE</p>
-        <h1>Welcome back.</h1>
-        <p className="muted">Pick up where you left off.</p>
+        <p className="eyebrow">PRIVATE WORKSPACE</p>
+        <h1>Welcome back</h1>
+        <p className="muted">Sign in to continue your training.</p>
       </div>
       <label>
         Account name
@@ -97,7 +94,7 @@ export function SignIn({ onSuccess }: { onSuccess: () => Promise<void> }) {
       <output className="sign-in-message" aria-live="polite">
         {message}
       </output>
-      <p className="sign-in-privacy">Just you and your progress.</p>
+      <p className="sign-in-privacy">Encrypted in transit · Private by default</p>
     </form>
   );
 }

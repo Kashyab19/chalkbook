@@ -272,6 +272,13 @@ export default function Home() {
           <strong>Repwise</strong>
         </header>
         <div className="auth-content">
+          <section className="auth-showcase" aria-label="Repwise training notebook">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/repwise-mark.png" alt="" width="184" height="184" />
+            <p className="eyebrow">YOUR TRAINING, READY</p>
+            <h1>Every rep.<br />Right where you left it.</h1>
+            <p>Private workout history, progress, and programming—ready when you are.</p>
+          </section>
           <SignIn onSuccess={notebook.sync} />
           {notebook.localError && (
             <p className="error" role="alert">
