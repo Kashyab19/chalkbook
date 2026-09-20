@@ -91,6 +91,12 @@ The implementation preserves the source hierarchy: compact session title/progres
 - Fix: rebuilt Settings rows on a stable label/control grid, kept all five rest durations on one line, gave accent choices responsive 4-column/2-column layouts, split device management into focused Install and Backup cards, replaced visible native file chrome with an accessible Import backup control, and moved technical sync details into a disclosure. Replaced the legacy gym-room logo and favicon set with a small-size-safe Repwise R/barbell mark.
 - Post-fix evidence: at 1440 × 900 the Training controls align to one consistent right-hand column and Data & device reads as two balanced task cards; at 375 × 667 every control stacks without horizontal overflow and the two device cards become a single column. The new identity remains clear at 40px in the app header.
 
+### Iteration 11
+
+- [P2] The geometric R/barbell mark felt disconnected from the established 3D exercise illustration system.
+- Fix: replaced it with a compact 3D Repwise mascot holding a dumbbell and checked workout notebook, rendered in the same toy-like materials, proportions, lighting, and dark-equipment palette as the exercise iconset. Regenerated all favicon, Apple touch, and PWA icon sizes from the same master.
+- Post-fix evidence: the refreshed desktop header shows the new mascot clearly at 40px next to Repwise and its character, clothing, weights, and lighting visibly match the squat artwork used on the Today screen.
+
 ## Primary interactions tested
 
 - Changed workout date to a scheduled training day.
