@@ -1,8 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { CalendarDays, ArrowRight, Trophy } from 'lucide-react';
+import { CalendarDays, ArrowRight } from 'lucide-react';
 import { Picker, Chart, performance } from './controls';
 import { dateLabel, display, type Data, type Session } from '@/lib/training';
+import { ExerciseArt } from './exercise-art';
 export function History({
   data,
   unit,
@@ -17,6 +18,7 @@ export function History({
   const [workout, setWorkout] = useState('all'),
     [exercise, setExercise] = useState('all'),
     [date, setDate] = useState(''),
+    [range, setRange] = useState('90'),
     [metric, setMetric] = useState('weight'),
     [atWeight, setAtWeight] = useState('');
   const exerciseOptions = Array.from(
@@ -27,17 +29,30 @@ export function History({
       ].map((e) => [e.id, { value: e.id, label: e.name }]),
     ).values(),
   );
-  const filtered = data.sessions.filter(
+  const now = Date.now();
+  const meaningfulSessions = data.sessions.filter((s) =>
+    s.exercises.some((e) => e.entries.some((entry) => entry.completed)),
+  );
+  const filtered = meaningfulSessions.filter(
     (s) =>
       (workout === 'all' || s.templateId === workout) &&
       (!date || s.date === date) &&
+      (range === 'all' || now - Date.parse(`${s.date}T12:00:00`) <= Number(range) * 86400000) &&
       (exercise === 'all' || s.exercises.some((e) => e.id === exercise)),
   );
-  const now = Date.now();
   const recent = (days: number) =>
-    data.sessions.filter(
+    meaningfulSessions.filter(
       (s) => now - Date.parse(`${s.date}T12:00:00`) < days * 86400000,
     );
+  const activity = Array.from({ length: 8 }, (_, index) => {
+    const end = now - (7 - index) * 7 * 86400000;
+    const start = end - 7 * 86400000;
+    return meaningfulSessions.filter((s) => {
+      const time = Date.parse(`${s.date}T12:00:00`);
+      return time > start && time <= end;
+    }).length;
+  });
+  const activityMax = Math.max(1, ...activity);
   const best = (name: string) =>
     data.sessions
       .flatMap((s) =>
@@ -105,7 +120,7 @@ export function History({
           const value = best(key);
           return (
             <article className="paper history-stat" key={key}>
-              <Trophy size={18} />
+              <ExerciseArt name={label} className="history-stat-art" />
               <span>{label}</span>
               <strong>
                 {value ? `${value.weight} ${unit} × ${value.reps}` : '—'}
@@ -116,9 +131,21 @@ export function History({
         })}
       </div>
       <div className="history-periods paper">
-        <strong>Recent training</strong>
-        <span>Last 7 days: {recent(7).length} workouts</span>
-        <span>Last 30 days: {recent(30).length} workouts</span>
+        <div className="history-activity-heading">
+          <div><strong>Training rhythm</strong><span>Your completed workouts over the last 8 weeks</span></div>
+          <b>{recent(7).length}<small> this week</small></b>
+        </div>
+        <div className="history-activity-chart" role="img" aria-label={`Weekly workouts for the last eight weeks: ${activity.join(', ')}`}>
+          {activity.map((count, index) => (
+            <div key={index}><span style={{ height: `${Math.max(8, (count / activityMax) * 100)}%` }} /><small>{index === 7 ? 'Now' : `${7 - index}w`}</small></div>
+          ))}
+        </div>
+        <p>{recent(30).length} workouts in the last 30 days</p>
+      </div>
+      <div className="history-range" aria-label="History range">
+        {[['30', '30 days'], ['90', '90 days'], ['all', 'All time']].map(([value, label]) => (
+          <button key={value} aria-pressed={range === value} onClick={() => setRange(value)}>{label}</button>
+        ))}
       </div>
       <details className="history-filters">
         <summary>Filter history</summary>

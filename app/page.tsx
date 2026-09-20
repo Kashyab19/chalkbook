@@ -54,6 +54,7 @@ export default function Home() {
     [chosen, setChosen] = useState(''),
     [unit, setUnit] = useState('lb'),
     [restSeconds, setRestSeconds] = useState(60),
+    [accent, setAccent] = useState('lime'),
     [applyUpdate, setApplyUpdate] = useState<(() => void) | null>(null);
   useEffect(() => {
     // Client-only date initialization avoids timezone differences during Sites hydration.
@@ -64,6 +65,9 @@ export default function Home() {
       setUnit(localStorage.getItem('gym-unit') || 'lb');
       const savedRest = Number(localStorage.getItem('gym-rest-seconds'));
       setRestSeconds([30, 45, 60, 90, 120].includes(savedRest) ? savedRest : 60);
+      const savedAccent = localStorage.getItem('repwise-accent') || 'lime';
+      setAccent(savedAccent);
+      document.documentElement.dataset.accent = savedAccent;
       document.documentElement.classList.add('dark');
       localStorage.setItem('gym-theme', 'dark');
     } catch {}
@@ -95,6 +99,13 @@ export default function Home() {
     setRestSeconds(seconds);
     try {
       localStorage.setItem('gym-rest-seconds', String(seconds));
+    } catch {}
+  }
+  function changeAccent(value: string) {
+    setAccent(value);
+    document.documentElement.dataset.accent = value;
+    try {
+      localStorage.setItem('repwise-accent', value);
     } catch {}
   }
   const statusIcon =
@@ -463,6 +474,22 @@ export default function Home() {
                   {[30, 45, 60, 90, 120].map((seconds) => (
                     <button key={seconds} aria-pressed={restSeconds === seconds} onClick={() => changeRest(seconds)}>
                       {seconds < 60 ? `${seconds}s` : `${seconds / 60}m`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="settings-row settings-row-stack">
+                <div><strong>Accent color</strong><span>Choose the highlight color used across Repwise.</span></div>
+                <div className="accent-options" aria-label="Accent color">
+                  {[
+                    ['lime', 'Lime', '#a8ff35'],
+                    ['blue', 'Electric blue', '#55a7ff'],
+                    ['violet', 'Violet', '#aa7cff'],
+                    ['coral', 'Coral', '#ff7d6b'],
+                  ].map(([value, label, color]) => (
+                    <button key={value} aria-pressed={accent === value} onClick={() => changeAccent(value)}>
+                      <i style={{ backgroundColor: color }} aria-hidden />
+                      <span>{label}</span>
                     </button>
                   ))}
                 </div>

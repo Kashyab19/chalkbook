@@ -1,11 +1,11 @@
-# Design QA — Focus-mode workout logger
+# Design QA — Repwise responsive refinement
 
 - Source visual truth: `/Users/nikash/.codex/generated_images/01a0bf8e-eabe-7be1-bb07-14bf4deeb4cd/exec-2d90fd56-ca86-43e6-b0fa-70263d8d9347.png`
 - Implementation: `http://localhost:3000/`, in-app browser tab 2, active Push workout on 2026-09-15
-- Implementation screenshot: in-app browser capture emitted in the build thread after the v2 exercise art reload (the browser surface does not expose a filesystem save path)
-- Viewport: 398px-wide mobile browser viewport; implementation content is responsive and unframed
+- Implementation screenshot: in-app browser captures emitted in the build thread for Today, History, Program, and Settings (the browser surface does not expose a filesystem save path)
+- Viewport: 375 × 667 iPhone SE-class mobile browser viewport plus the default desktop viewport; implementation content is responsive and unframed
 - Source pixels: 853 × 1844 (roughly 2× mobile density)
-- Implementation pixels: 398px-wide browser capture at device scale 1
+- Implementation pixels: 375 × 667 browser capture at device scale 1
 - Density normalization: compared by matching the app-owned mobile content width and proportions; browser/device chrome is absent from both
 - State: active workout, current exercise Chest Press, set 1 of 3, empty weight and reps, 0 of 21 total sets
 
@@ -79,6 +79,12 @@ The implementation preserves the source hierarchy: compact session title/progres
 - Fix: rebranded the product as Repwise across visible UI, document metadata, install metadata, update messaging, and backup filenames; constrained the Today shell to the same 1040px centered grid as every other page.
 - Post-fix evidence: the browser title and visible brand both read Repwise, Today is centered at the desktop viewport with no horizontal overflow, and the production build passes.
 
+### Iteration 9
+
+- [P1] Primary navigation was oversized and visually off-center; History used generic trophy glyphs; recent activity was text-only; Program day tiles were too tall; Settings had no accent choice.
+- Fix: constrained and centered the four-item navigation at mobile and desktop breakpoints, replaced trophies with the mapped 3D bench/squat/deadlift art, added an eight-week activity bar chart, defaulted History to meaningful workouts from the last 90 days with 30-day and All-time controls, compacted the swipeable Program strip, and added four persistent accent palettes.
+- Post-fix evidence: at 375 × 667, Today retains all set-entry controls above the fold, History shows correct 3D lift art and the activity chart, Program shows a compact horizontal schedule, Violet updates the settings selection and shared UI tokens, and the browser console reports no warnings or errors. The default desktop view shows a centered 540px navigation container.
+
 ## Primary interactions tested
 
 - Changed workout date to a scheduled training day.
@@ -89,6 +95,8 @@ The implementation preserves the source hierarchy: compact session title/progres
 - Checked browser console warnings/errors: none.
 - Verified Today, History, Weight, and Program at a 390 × 844 mobile viewport with no horizontal overflow.
 - Verified desktop navigation and page width after restoring the normal viewport.
+- Switched History ranges, inspected the eight-week chart, and confirmed abandoned zero-set drafts do not appear in the record.
+- Selected the Violet accent and confirmed the live token update before restoring the normal browser viewport.
 
 ## Findings
 
