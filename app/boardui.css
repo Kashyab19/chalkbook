@@ -1378,7 +1378,7 @@ html.dark .sign-in-submit {
 @media (min-width: 641px) {
   .focus-workout { margin-inline: 0; padding: 28px 42px 42px; border-radius: 36px; }
   .focus-current { max-width: 590px; margin-inline: auto; }
-  .exercise-art.focus-hero-art { width: 330px; height: 330px; }
+  .exercise-art.focus-hero-art { width: 276px; height: 276px; }
 }
 @media (max-width: 440px) {
   .focus-session-header { grid-template-columns: minmax(0, 1fr) 86px 46px; gap: 10px; }
@@ -1767,7 +1767,7 @@ html[data-accent='coral'] { --app-accent-300: #ffb3a8; --app-accent-400: #ff9586
 .notebook.boardui .program-days button[aria-pressed='true'] { background: var(--app-accent-500) !important; box-shadow: 0 8px 22px color-mix(in srgb, var(--app-accent-500) 14%, transparent); }
 
 /* One-glance set continuity and an in-session exercise swap. */
-.focus-exercise-title { display: flex; align-items: center; justify-content: center; gap: 9px; }
+.focus-exercise-title { display: flex; align-items: center; justify-content: center; gap: 14px; }
 .focus-exercise-title h2 { margin: 0; }
 .focus-swap-trigger { display: inline-flex; min-height: 32px; align-items: center; gap: 5px; padding: 6px 9px; border: 1px solid #343735; border-radius: 999px; background: #171918; color: #c8ccc9; font-size: 11px; font-weight: 750; }
 .focus-swap-trigger svg { width: 14px; height: 14px; }

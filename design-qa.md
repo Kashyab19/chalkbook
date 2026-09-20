@@ -109,6 +109,12 @@ The implementation preserves the source hierarchy: compact session title/progres
 - Fix: normalized the visible schedule to Monday–Sunday without rewriting stored programs, added an inline in-session exercise swap, converted the existing context pill into a tappable previous-set recall on sets 2+, and rebuilt mobile navigation as an evenly spaced floating glass tab bar.
 - Post-fix evidence: at 375 × 667 the schedule reads Mon, Tue, Wed, Thu, Fri, Sat, Sun; the swap editor opens inline without displacing the logger excessively; after a temporary 105 lb × 8 set, set 2 displayed “Previous 105 lb × 8 · Use”; undo restored the test workout, temporary values were cleared, and the browser console reported no warnings or errors.
 
+### Iteration 14
+
+- [P2] The desktop exercise artwork reserved more vertical space than its information value justified, while the Swap action sat too close to the exercise name.
+- Fix: reduced the desktop/tablet hero slot from 330px to 276px and increased the title/action gap to 14px, leaving the already compact small-phone artwork sizing intact.
+- Post-fix evidence: the normal desktop viewport shows a visibly shorter hero section and clear separation between “Back Squat” and “Swap”; at 375 × 667, all logging controls remain above the floating navigation and the browser console reports no warnings or errors.
+
 ## Primary interactions tested
 
 - Changed workout date to a scheduled training day.
