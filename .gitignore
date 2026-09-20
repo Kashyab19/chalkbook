@@ -43,3 +43,7 @@ next-env.d.ts
 .pnpm-store/
 
 /build/
+
+# local design source bundles (optimized app assets live under /public)
+/gym-icons-final/
+/gym-icons-final.zip
