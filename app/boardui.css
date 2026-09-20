@@ -1704,6 +1704,10 @@ html[data-accent='coral'] { --app-accent-300: #ffb3a8; --app-accent-400: #ff9586
   box-sizing: border-box;
   justify-items: stretch;
 }
+.notebook.boardui [role='tab'] {
+  justify-content: center;
+  text-align: center;
+}
 @media (max-width: 699px) {
   .notebook.boardui [role='tablist'] {
     right: auto;
@@ -1860,4 +1864,57 @@ html[data-accent='coral'] { --app-accent-300: #ffb3a8; --app-accent-400: #ff9586
   .focus-log-button { min-height: 58px; margin-top: 9px; padding-left: 50px; border-radius: 19px; font-size: 20px; }
   .focus-log-button svg { width: 44px; height: 44px; padding: 10px; }
   .focus-help { margin-top: 5px; text-align: center; }
+}
+
+/* Reference-aligned mobile workout composition: compact but vertically staged. */
+@media (max-width: 440px) {
+  .focus-workout { gap: 10px; padding: 2px 14px 82px; }
+  .focus-current {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .exercise-art.focus-hero-art {
+    width: min(72vw, 260px);
+    height: min(39vw, 150px);
+    border-radius: 22px;
+  }
+  .exercise-art.focus-hero-art img { transform: scale(1.12); }
+  .focus-current h2 {
+    margin: -2px 0 0;
+    font-size: clamp(32px, 9vw, 38px);
+    line-height: 1;
+    text-align: center;
+  }
+  .focus-set-count { margin-top: 5px; font-size: 15px; text-align: center; }
+  .focus-previous {
+    align-self: center;
+    justify-self: auto;
+    margin: 9px 0 11px;
+    padding: 7px 14px;
+    font-size: 13px;
+  }
+  .focus-fields { width: 100%; gap: 8px; }
+  .focus-field > span { margin-bottom: 6px; font-size: 13px; }
+  .focus-field > div {
+    min-height: 82px;
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
+    padding: 8px 7px;
+    border-radius: 19px;
+  }
+  .focus-field button { width: 38px; height: 38px; font-size: 24px; }
+  .focus-field input { font-size: clamp(30px, 9vw, 38px) !important; }
+  .focus-field small { margin-top: 2px; font-size: 12px; }
+  .focus-log-button {
+    min-height: 58px;
+    margin-top: 10px;
+    padding: 7px 7px 7px 52px;
+    border-radius: 21px;
+    font-size: 21px;
+  }
+  .focus-log-button svg { width: 44px; height: 44px; padding: 10px; }
+  .focus-help { margin-top: 6px; }
+  .focus-rest { padding: 12px; border-radius: 21px; }
+  .focus-up-next { padding-top: 15px; }
 }

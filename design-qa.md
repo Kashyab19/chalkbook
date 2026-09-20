@@ -97,6 +97,12 @@ The implementation preserves the source hierarchy: compact session title/progres
 - Fix: replaced it with a compact 3D Repwise mascot holding a dumbbell and checked workout notebook, rendered in the same toy-like materials, proportions, lighting, and dark-equipment palette as the exercise iconset. Regenerated all favicon, Apple touch, and PWA icon sizes from the same master.
 - Post-fix evidence: the refreshed desktop header shows the new mascot clearly at 40px next to Repwise and its character, clothing, weights, and lighting visibly match the squat artwork used on the Today screen.
 
+### Iteration 12
+
+- [P1] The navigation labels were visually left-biased inside equal-width segments, History repeated “Best logged set,” and the short-phone workout layout moved the 3D artwork beside the exercise title instead of preserving the reference's centered vertical composition.
+- Fix: centered every navigation segment's icon-and-label group, removed the repeated History caption, and rebuilt the ≤440px workout logger as a dense vertical sequence with compact centered 3D art, shallower steppers, and a shorter CTA so logging stays visible above the fixed navigation at a 381 × 693 viewport.
+- Post-fix evidence: the desktop segmented navigation now centers each icon-label group; History contains zero “Best logged set” labels; and the 381 × 693 Today capture shows session context, centered 3D squat art, exercise title, set count, previous-performance pill, both steppers, and the complete Log set action above the navigation without scrolling.
+
 ## Primary interactions tested
 
 - Changed workout date to a scheduled training day.

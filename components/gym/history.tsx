@@ -125,7 +125,6 @@ export function History({
               <strong>
                 {value ? `${value.weight} ${unit} × ${value.reps}` : '—'}
               </strong>
-              <small>Best logged set</small>
             </article>
           );
         })}
