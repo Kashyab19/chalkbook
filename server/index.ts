@@ -178,6 +178,7 @@ const server = createServer(async (req, res) => {
       '.webmanifest': 'application/manifest+json',
       '.svg': 'image/svg+xml',
       '.png': 'image/png',
+      '.webp': 'image/webp',
       '.woff2': 'font/woff2',
     };
     res.setHeader(
