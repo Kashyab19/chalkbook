@@ -1712,18 +1712,25 @@ html[data-accent='coral'] { --app-accent-300: #ffb3a8; --app-accent-400: #ff9586
   .notebook.boardui [role='tablist'] {
     right: auto;
     left: 50%;
-    width: min(calc(100% - 20px), 440px);
-    height: calc(64px + env(safe-area-inset-bottom));
+    bottom: max(8px, env(safe-area-inset-bottom));
+    width: min(calc(100% - 24px), 420px);
+    height: 64px;
     transform: translateX(-50%);
-    gap: 2px;
-    padding: 5px 6px env(safe-area-inset-bottom);
-    border: 1px solid #292c2a;
-    border-bottom: 0;
-    border-radius: 18px 18px 0 0;
+    gap: 4px;
+    padding: 5px;
+    border: 1px solid rgb(255 255 255 / .1);
+    border-radius: 22px;
+    background: rgb(18 20 19 / .92);
+    box-shadow: 0 16px 48px rgb(0 0 0 / .55), inset 0 1px 0 rgb(255 255 255 / .05);
+    backdrop-filter: blur(24px) saturate(140%);
   }
-  .notebook.boardui [role='tab'] { min-height: 52px; gap: 2px; padding: 5px 2px; border-radius: 12px; }
-  .notebook.boardui [role='tab'] svg { width: 20px; height: 20px; }
-  .notebook.boardui [role='tab'] span { font-size: 10px; }
+  .notebook.boardui [role='tab'] { min-height: 52px; gap: 2px; padding: 5px 2px; border-radius: 17px; }
+  .notebook.boardui [role='tab'] svg { width: 21px; height: 21px; }
+  .notebook.boardui [role='tab'] span { font-size: 10px; letter-spacing: .01em; }
+  .notebook.boardui [role='tab'][aria-selected='true'] {
+    background: color-mix(in srgb, var(--app-accent-500) 12%, #191c19);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--app-accent-500) 14%, transparent);
+  }
 }
 @media (min-width: 700px) {
   .notebook.boardui [role='tablist'] { max-width: 540px; padding: 4px; border-radius: 16px; }
@@ -1758,6 +1765,18 @@ html[data-accent='coral'] { --app-accent-300: #ffb3a8; --app-accent-400: #ff9586
 .notebook.boardui .program-days button span { font-size: 11px; }
 .notebook.boardui .program-days button strong { margin-top: 4px; font-size: 13px; line-height: 1.18; }
 .notebook.boardui .program-days button[aria-pressed='true'] { background: var(--app-accent-500) !important; box-shadow: 0 8px 22px color-mix(in srgb, var(--app-accent-500) 14%, transparent); }
+
+/* One-glance set continuity and an in-session exercise swap. */
+.focus-exercise-title { display: flex; align-items: center; justify-content: center; gap: 9px; }
+.focus-exercise-title h2 { margin: 0; }
+.focus-swap-trigger { display: inline-flex; min-height: 32px; align-items: center; gap: 5px; padding: 6px 9px; border: 1px solid #343735; border-radius: 999px; background: #171918; color: #c8ccc9; font-size: 11px; font-weight: 750; }
+.focus-swap-trigger svg { width: 14px; height: 14px; }
+.focus-swap-form { display: grid; width: min(100%, 500px); grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 7px; margin: 9px auto 11px; padding: 6px; border: 1px solid #343735; border-radius: 15px; background: #151716; }
+.focus-swap-form input { min-width: 0; min-height: 40px; }
+.focus-swap-form button { min-height: 40px; padding: 0 11px; border-radius: 10px; color: #bfc4c0; font-size: 12px; font-weight: 750; }
+.focus-swap-form button[type='submit'] { background: var(--app-accent-500); color: #0b0d0b; }
+.focus-previous-set { display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 1px solid #353835; color: #b8bdb9; }
+.focus-previous-set span { margin-left: 5px; color: var(--app-accent-400); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
 
 .accent-options { display: grid !important; width: min(100%, 460px); grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
 .accent-options button { display: flex; min-height: 54px; align-items: center; justify-content: center; gap: 7px; padding: 8px; border: 1px solid #343735; border-radius: 12px; background: #111312; color: #c6cac7; font-size: 12px; font-weight: 700; }
@@ -1887,6 +1906,10 @@ html[data-accent='coral'] { --app-accent-300: #ffb3a8; --app-accent-400: #ff9586
     line-height: 1;
     text-align: center;
   }
+  .focus-exercise-title { width: 100%; gap: 7px; }
+  .focus-exercise-title h2 { width: auto; min-width: 0; font-size: clamp(30px, 8.4vw, 37px); }
+  .focus-swap-trigger { flex: 0 0 auto; min-height: 30px; padding: 5px 8px; }
+  .focus-swap-form { margin: 8px 0 10px; }
   .focus-set-count { margin-top: 5px; font-size: 15px; text-align: center; }
   .focus-previous {
     align-self: center;

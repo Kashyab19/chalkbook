@@ -17,6 +17,9 @@ export function Program({
     [draft, setDraft] = useDeviceDraft<Exercise | null>('program:draft', null),
     [destination, setDestination] = useDeviceDraft('program:destination', ''),
     [error, setError] = useState('');
+  const orderedProgram = [...program].sort(
+    (a, b) => ((a.day + 6) % 7) - ((b.day + 6) % 7),
+  );
   const day = program.find((d) => d.id === selected) ?? program[0];
   function reorder(i: number, offset: number) {
     const list = [...day.exercises];
@@ -81,7 +84,7 @@ export function Program({
         <p className="muted small">Tap a day to edit its exercises.</p>
       </div>
       <div className="program-days">
-        {program.map((d) => (
+        {orderedProgram.map((d) => (
           <button
             aria-pressed={selected === d.id}
             key={d.id}
@@ -225,7 +228,7 @@ export function Program({
               label="Move to day"
               value={destination}
               onChange={setDestination}
-              items={program.map((d) => ({
+              items={orderedProgram.map((d) => ({
                 value: d.id,
                 label: `${days[d.day]} · ${d.name}`,
               }))}

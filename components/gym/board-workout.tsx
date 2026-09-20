@@ -14,6 +14,7 @@ import {
   RiChat1Line,
   RiCheckLine,
   RiMore2Line,
+  RiPencilLine,
   RiPauseLine,
   RiTimeLine,
 } from '@remixicon/react';
@@ -55,7 +56,9 @@ export function BoardWorkout({
       exercise: number;
       set: number;
     } | null>(null),
-    [noteOpen, setNoteOpen] = useState(false);
+    [noteOpen, setNoteOpen] = useState(false),
+    [swapOpen, setSwapOpen] = useState(false),
+    [swapName, setSwapName] = useState('');
   const [until, setUntil] = useDeviceDraft<number>(`rest-${session.id}`, 0);
   const lock = useRef(false);
   const interactions = useRef<InteractionMetrics>(
@@ -110,6 +113,9 @@ export function BoardWorkout({
   const currentPrevious = currentExercise
     ? previous(sessions, currentExercise.id, session.date)
     : null;
+  const previousSet = currentExercise && nextI > 0
+    ? currentExercise.entries[nextI - 1]
+    : null;
   const nextExercise = session.exercises.find(
     (exercise, index) =>
       index > nextJ && exercise.entries.some((entry) => !entry.completed),
@@ -155,6 +161,25 @@ export function BoardWorkout({
         setUndo(null);
       },
     );
+  const swapExercise = () => {
+    const name = swapName.trim();
+    if (!currentExercise || !name || name === currentExercise.name) {
+      setSwapOpen(false);
+      return;
+    }
+    const updated: Session = {
+      ...session,
+      exercises: session.exercises.map((exercise, index) =>
+        index === nextJ
+          ? { ...exercise, id: `custom-${crypto.randomUUID()}`, name }
+          : exercise,
+      ),
+    };
+    void run({ type: 'restoreSession', session: updated }, () => {
+      setSwapOpen(false);
+      setSwapName('');
+    });
+  };
   return (
     <div
       className="focus-workout"
@@ -190,9 +215,49 @@ export function BoardWorkout({
       {currentExercise && next ? (
         <main className="focus-current" aria-live="polite">
           <ExerciseArt name={currentExercise.name} className="focus-hero-art" />
-          <h2>{currentExercise.name}</h2>
+          <div className="focus-exercise-title">
+            <h2>{currentExercise.name}</h2>
+            <button
+              type="button"
+              className="focus-swap-trigger"
+              aria-label={`Swap ${currentExercise.name}`}
+              disabled={busy || saving || finished}
+              onClick={() => {
+                setSwapName(currentExercise.name);
+                setSwapOpen(true);
+              }}
+            >
+              <RiPencilLine aria-hidden />
+              <span>Swap</span>
+            </button>
+          </div>
           <p className="focus-set-count">Set {nextI + 1} of {currentExercise.entries.length}</p>
-          {currentPrevious ? (
+          {swapOpen ? (
+            <form className="focus-swap-form" onSubmit={(event) => { event.preventDefault(); swapExercise(); }}>
+              <Input
+                autoFocus
+                aria-label="Replacement exercise name"
+                value={swapName}
+                maxLength={100}
+                onChange={(value) => setSwapName(value)}
+              />
+              <button type="button" onClick={() => setSwapOpen(false)}>Cancel</button>
+              <button type="submit" disabled={!swapName.trim() || busy || saving}>Use</button>
+            </form>
+          ) : previousSet?.completed && previousSet.weightKg != null && previousSet.reps != null ? (
+            <button
+              type="button"
+              className="focus-previous focus-previous-set"
+              disabled={busy || saving || finished}
+              onClick={() => void run({
+                type: 'set', id: session.id, exercise: nextJ, set: nextI,
+                value: { ...next, weightKg: previousSet.weightKg, reps: previousSet.reps, completed: false },
+              })}
+            >
+              Previous <strong>{display(previousSet.weightKg, unit)} {unit} × {previousSet.reps}</strong>
+              <span>Use</span>
+            </button>
+          ) : currentPrevious ? (
             <p className="focus-previous">
               Last time <strong>
                 {currentPrevious.exercise.entries[nextI]?.weightKg == null

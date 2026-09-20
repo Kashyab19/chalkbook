@@ -103,6 +103,12 @@ The implementation preserves the source hierarchy: compact session title/progres
 - Fix: centered every navigation segment's icon-and-label group, removed the repeated History caption, and rebuilt the ≤440px workout logger as a dense vertical sequence with compact centered 3D art, shallower steppers, and a shorter CTA so logging stays visible above the fixed navigation at a 381 × 693 viewport.
 - Post-fix evidence: the desktop segmented navigation now centers each icon-label group; History contains zero “Best logged set” labels; and the 381 × 693 Today capture shows session context, centered 3D squat art, exercise title, set count, previous-performance pill, both steppers, and the complete Log set action above the navigation without scrolling.
 
+### Iteration 13
+
+- [P1] The Program strip followed persistence order instead of calendar order, the active workout offered no lightweight exercise substitution, later sets hid the immediately preceding result, and the mobile navigation still read like a cropped web control.
+- Fix: normalized the visible schedule to Monday–Sunday without rewriting stored programs, added an inline in-session exercise swap, converted the existing context pill into a tappable previous-set recall on sets 2+, and rebuilt mobile navigation as an evenly spaced floating glass tab bar.
+- Post-fix evidence: at 375 × 667 the schedule reads Mon, Tue, Wed, Thu, Fri, Sat, Sun; the swap editor opens inline without displacing the logger excessively; after a temporary 105 lb × 8 set, set 2 displayed “Previous 105 lb × 8 · Use”; undo restored the test workout, temporary values were cleared, and the browser console reported no warnings or errors.
+
 ## Primary interactions tested
 
 - Changed workout date to a scheduled training day.
