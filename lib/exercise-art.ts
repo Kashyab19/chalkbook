@@ -11,7 +11,7 @@ const exerciseArt = [
     terms: ['pull-up', 'pull up', 'pulldown', 'pull down'],
   },
   { file: 'barbell-row.png', terms: ['row'] },
-  { file: 'leg-press.png', terms: ['leg press', 'leg extension', 'leg curl'] },
+  { file: 'leg-press.png', terms: ['leg press', 'leg extension'] },
   { file: 'bicep-curl.png', terms: ['bicep', 'biceps', 'curl'] },
   {
     file: 'tricep-pushdown.png',
@@ -24,7 +24,7 @@ const exerciseArt = [
   },
   {
     file: 'plank.png',
-    terms: ['plank', 'core', 'abductor', 'adductor', 'glute bridge'],
+    terms: ['plank', 'core', 'abductor', 'adductor'],
   },
 ] as const;
 

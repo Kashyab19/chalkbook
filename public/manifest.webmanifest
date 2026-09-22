@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Repwise",
-  "short_name": "Repwise",
-  "description": "Repwise — your private workout and body-weight tracker, available offline.",
+  "name": "Chalkbook",
+  "short_name": "Chalkbook",
+  "description": "Chalkbook — your private workout and body-weight tracker, available offline.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

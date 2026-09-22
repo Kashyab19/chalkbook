@@ -306,6 +306,20 @@ export function BoardWorkout({
           >
             <span>Log set</span><RiArrowRightLine aria-hidden />
           </button>
+          {!finished && currentExercise.entries.length < 30 ? (
+            <button
+              type="button"
+              className="focus-add-set"
+              disabled={busy || saving}
+              onClick={() => void run({
+                type: 'addSet', id: session.id, exercise: nextJ,
+                set: currentExercise.entries.length,
+                value: { weightKg: next.weightKg, reps: next.reps, completed: false },
+              })}
+            >
+              <RiAddLine aria-hidden /> Add another set
+            </button>
+          ) : null}
           {!validSet({ ...next, completed: true }) ? (
             <p className="focus-help">Enter weight and reps to log this set.</p>
           ) : null}
@@ -332,7 +346,7 @@ export function BoardWorkout({
         </section>
       ) : null}
 
-      {undo || noteTarget ? (
+      {undo || noteTarget || (currentExercise && next && !finished) ? (
         <div className="focus-quick-actions">
           {undo ? (
             <Button variant="ghost" disabled={busy || saving} onClick={() =>
@@ -341,9 +355,12 @@ export function BoardWorkout({
               })
             }>Undo last set</Button>
           ) : null}
-          {noteTarget ? (
+          {noteTarget || (currentExercise && next && !finished) ? (
             <Button variant="ghost" leadingIcon={RiChat1Line} disabled={busy || saving}
-              aria-expanded={noteOpen} onClick={() => setNoteOpen((open) => !open)}>
+              aria-expanded={noteOpen} onClick={() => {
+                if (!noteTarget && currentExercise && next) setNoteTarget({ exercise: nextJ, set: nextI });
+                setNoteOpen((open) => !open);
+              }}>
               Add note
             </Button>
           ) : null}
@@ -410,8 +427,18 @@ function FocusField({ label, unit, value, step, max, integer = false, disabled, 
   label: string; unit: string; value: number | null; step: number; max: number;
   integer?: boolean; disabled: boolean; onSave: (value: number | null) => Promise<boolean>;
 }) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const text = draft ?? (value == null ? '' : String(value));
+  const commit = () => {
+    if (draft === null) return;
+    const next = draft === '' ? null : Number(draft);
+    if (next === null || (Number.isFinite(next) && next >= 0 && next <= max && (!integer || Number.isInteger(next)))) {
+      void onSave(next).then((ok) => { if (ok) setDraft(null); });
+    }
+  };
   const update = (delta: number) => {
     const next = Math.min(max, Math.max(0, (value ?? 0) + delta));
+    setDraft(null);
     void onSave(integer ? Math.round(next) : Number(next.toFixed(2)));
   };
   return (
@@ -421,12 +448,11 @@ function FocusField({ label, unit, value, step, max, integer = false, disabled, 
         <button aria-label={`Decrease ${label.toLowerCase()}`} disabled={disabled} onClick={() => update(-step)}>−</button>
         <label>
           <span className="sr-only">{label}</span>
-          <input inputMode={integer ? 'numeric' : 'decimal'} value={value ?? ''} placeholder="—" disabled={disabled}
+          <input inputMode={integer ? 'numeric' : 'decimal'} value={text} placeholder="—" disabled={disabled}
+            onBlur={commit}
             onChange={(event) => {
               const text = event.target.value;
-              if (text === '') { void onSave(null); return; }
-              const number = Number(text);
-              if (Number.isFinite(number) && number >= 0 && number <= max && (!integer || Number.isInteger(number))) void onSave(number);
+              if (text === '' || /^\d*(\.\d*)?$/.test(text)) setDraft(text);
             }} />
           <small>{unit}</small>
         </label>

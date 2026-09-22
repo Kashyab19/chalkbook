@@ -1342,6 +1342,8 @@ html.dark .sign-in-submit {
 .focus-up-next strong { flex: 1; font-size: 18px; }
 .focus-up-next svg { width: 24px; color: #a8adaa; }
 .focus-quick-actions { display: flex; justify-content: center; gap: 8px; }
+.focus-add-set { display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin: 8px auto 0; color: #aeb7b1; font-size: 13px; font-weight: 700; }
+.focus-add-set svg { width: 16px; }
 .focus-quick-actions button { color: #c7cbc8; }
 .focus-workout .set-note { border-color: #2a2d2b; }
 .focus-workout .set-note textarea { background: #171918; border-color: #333634; color: #fff; }

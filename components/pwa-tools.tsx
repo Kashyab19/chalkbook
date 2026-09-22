@@ -137,7 +137,7 @@ export function PwaTools({
       const url = URL.createObjectURL(file);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `repwise-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `chalkbook-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 30000);
       setMessage(
@@ -179,7 +179,7 @@ export function PwaTools({
           </div>
           <p>
             In Safari, tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>.
-            Open Repwise online once before taking it offline.
+            Open Chalkbook online once before taking it offline.
           </p>
           {update && (
             <p className="device-update">
@@ -244,7 +244,7 @@ export function PwaTools({
       <details className="sync-details">
         <summary>How data and sync work</summary>
         <p>
-          Repwise keeps an offline copy on this device. For edits to the same
+          Chalkbook keeps an offline copy on this device. For edits to the same
           set, body-weight date, or program, the latest synced change wins.
           Restoring a backup only replaces matching records.
         </p>

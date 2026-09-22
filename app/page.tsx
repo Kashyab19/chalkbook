@@ -60,7 +60,7 @@ export default function Home() {
     // Client-only date initialization avoids timezone differences during Sites hydration.
     // eslint-disable-next-line react/react-compiler
     setDate(dateKey());
-    document.title = 'Repwise';
+    document.title = 'Chalkbook';
     try {
       setUnit(localStorage.getItem('gym-unit') || 'lb');
       const savedRest = Number(localStorage.getItem('gym-rest-seconds'));
@@ -269,10 +269,10 @@ export default function Home() {
           {/* Static local art is already compressed and dimensioned. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/repwise-mark.png" alt="" width="44" height="44" />
-          <strong>Repwise</strong>
+          <strong>Chalkbook</strong>
         </header>
         <div className="auth-content">
-          <section className="auth-showcase" aria-label="Repwise training notebook">
+          <section className="auth-showcase" aria-label="Chalkbook training notebook">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/brand/repwise-mark.png" alt="" width="184" height="184" />
             <p className="eyebrow">YOUR TRAINING, READY</p>
@@ -294,7 +294,7 @@ export default function Home() {
         <div className="board-brand">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/repwise-mark.png" alt="" width="40" height="40" />
-          <strong>Repwise</strong>
+          <strong>Chalkbook</strong>
         </div>
         <span
           className="save-status header-status"
@@ -486,7 +486,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="settings-row settings-row-stack">
-                <div><strong>Accent color</strong><span>Choose the highlight color used across Repwise.</span></div>
+                <div><strong>Accent color</strong><span>Choose the highlight color used across Chalkbook.</span></div>
                 <div className="accent-options" aria-label="Accent color">
                   {[
                     ['lime', 'Lime', '#a8ff35'],
@@ -545,7 +545,7 @@ function NotebookLoading() {
         height="88"
       />
       <div>
-        <strong>Repwise</strong>
+        <strong>Chalkbook</strong>
         <p>Opening your training log</p>
       </div>
     </main>

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import './boardui.css';
 export const metadata: Metadata = {
-  title: 'Repwise',
+  title: 'Chalkbook',
   description: 'Your personal workout and body-weight log.',
   manifest: '/manifest.webmanifest',
   icons: {
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    title: 'Repwise',
+    title: 'Chalkbook',
     statusBarStyle: 'black-translucent',
   },
   other: { 'mobile-web-app-capable': 'yes' },

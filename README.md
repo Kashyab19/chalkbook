@@ -1,4 +1,4 @@
-# Repwise
+# Chalkbook
 
 A private mobile workout and body-weight PWA. The default Legs, Push, Pull, Upper, Lower, and weekend rest program is preserved. No lifting weights are seeded.
 

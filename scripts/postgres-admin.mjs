@@ -53,7 +53,7 @@ try {
       }
       await client.query('COMMIT');
       console.log(
-        'Repwise schema ready. Existing non-Repwise tables were not changed.',
+        'Chalkbook schema ready. Existing non-Chalkbook tables were not changed.',
       );
     } catch (error) {
       await client.query('ROLLBACK');
