@@ -48,12 +48,18 @@ The existing Sites app and independent app are different origins. Sync or export
 
 ## Development and checks
 
-The simple development-to-production path is:
+The recommended development-to-production path is:
 
 1. Run `pnpm dev` while building.
 2. Run `pnpm verify` before committing. It runs tests, application typecheck, and the production build.
-3. Commit the verified changes.
-4. Run `pnpm deploy:railway`. It refuses to deploy a dirty worktree, reruns verification, and deploys the committed state to the existing production service.
+3. Push the branch and open a pull request. GitHub runs `pnpm verify` automatically.
+4. Merge the pull request. A push to `main` reruns verification and deploys the exact verified commit to production automatically.
+
+For one-time setup, add a repository secret named `RAILWAY_TOKEN` and create a GitHub Environment named `production`. Protect that environment if production deploys should require approval. The existing `pnpm deploy:railway` command remains available for a local emergency/manual deploy.
+
+### Local commit checks
+
+Install the lightweight pre-commit hook once with `pnpm hooks:install`. It checks staged whitespace errors and runs the linter. The full test, typecheck, and production build remain in the pull-request workflow.
 
 - `pnpm test`: training, validation, unit conversion, backup, and reducer tests.
 - `pnpm exec tsc --project tsconfig.application.json --noEmit`: application type checking.

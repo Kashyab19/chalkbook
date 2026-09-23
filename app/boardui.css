@@ -1370,6 +1370,15 @@ html.dark .sign-in-submit {
 .focus-exercise-heading span { color: #8f9491; font-size: 12px; }
 .focus-exercise-heading b { color: var(--focus-accent); font-size: 13px; }
 .focus-set-row { display: grid; grid-template-columns: 24px 1fr 1fr 44px; align-items: center; gap: 6px; margin: 6px 0; }
+.focus-set-row,
+.focus-set-row > *,
+.focus-set-row [data-input-size] {
+  min-width: 0;
+}
+.focus-set-row [data-input-size] input {
+  width: 100%;
+  min-width: 0;
+}
 .focus-set-row.is-complete { opacity: 0.58; }
 .focus-set-row [data-input-size] > [role='presentation'] { background: #202321; }
 .focus-set-row button { min-width: 42px; min-height: 42px; }
@@ -1391,6 +1400,8 @@ html.dark .sign-in-submit {
   .focus-field button { width: 40px; height: 40px; }
   .focus-rest { grid-template-columns: 50px minmax(0, 1fr) 44px; }
   .focus-rest button:first-of-type { display: none; }
+  .focus-set-row { gap: 4px; }
+  .focus-set-row button { min-width: 38px; width: 38px; padding-inline: 0; }
 }
 
 /* Unified responsive application shell. */

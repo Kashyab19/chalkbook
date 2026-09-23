@@ -11,6 +11,7 @@
     "start": "wrangler dev --config dist/server/wrangler.json",
     "lint": "oxlint",
     "format": "oxfmt",
+    "hooks:install": "node scripts/install-git-hooks.mjs",
     "db:generate": "drizzle-kit generate",
     "build:standalone": "GYM_STANDALONE=1 pnpm build && node scripts/prepare-standalone.mjs",
     "deploy:standalone": "pnpm build:standalone && wrangler deploy --config dist/server/standalone.json",
