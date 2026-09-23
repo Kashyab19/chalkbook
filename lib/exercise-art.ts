@@ -1,4 +1,17 @@
 const exerciseArt = [
+  { file: 'glute-bridge.png', terms: ['glute bridge'] },
+  { file: 'leg-curl.png', terms: ['leg curl'] },
+  { file: 'face-pull.png', terms: ['face pull'] },
+  { file: 'rear-delt-fly.png', terms: ['rear delt fly'] },
+  { file: 'calf-raise.png', terms: ['calf raise'] },
+  { file: 'abductor.png', terms: ['abductor'] },
+  { file: 'adductor.png', terms: ['adductor'] },
+  { file: 'preacher-curl.png', terms: ['preacher curl'] },
+  { file: 'hammer-curl.png', terms: ['hammer curl'] },
+  { file: 'tricep-extension.png', terms: ['tricep extension'] },
+  { file: 'romanian-deadlift.png', terms: ['romanian deadlift'] },
+  { file: 'chest-supported-row.png', terms: ['chest-supported row'] },
+  { file: 'leg-extension.png', terms: ['leg extension'] },
   {
     file: 'bench-press.png',
     terms: ['bench press', 'chest press', 'incline dumbbell press'],
