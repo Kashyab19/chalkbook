@@ -15,7 +15,7 @@ export function ExerciseArt({
     <span aria-hidden="true" className={`exercise-art ${className}`}>
       {/* Static local art is already compressed and has explicit dimensions. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt="" width="160" height="160" loading="eager" decoding="async"
+      <img src={src} alt="" width="160" height="160" loading="lazy" decoding="async"
         onError={() => setFailed(true)} />
     </span>
   );

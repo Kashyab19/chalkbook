@@ -2,6 +2,8 @@ export type SetLog = {
   weightKg: number | null;
   reps: number | null;
   completed: boolean;
+  /** When the set was completed, used to preserve exercise completion order. */
+  completedAt?: string;
   /** A brief, optional observation recorded immediately after this set. */
   note?: string;
 };

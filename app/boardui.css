@@ -1344,7 +1344,17 @@ html.dark .sign-in-submit {
 .focus-quick-actions { display: flex; justify-content: center; gap: 8px; }
 .focus-add-set { display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin: 8px auto 0; color: #aeb7b1; font-size: 13px; font-weight: 700; }
 .focus-add-set svg { width: 16px; }
-.focus-quick-actions button { color: #c7cbc8; }
+.focus-quick-actions button {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  border: 1px solid #2b2e2c;
+  border-radius: 50%;
+  background: #171918;
+  color: #c7cbc8;
+}
+.focus-quick-actions button:hover { background: #202321; color: #fff; }
 .focus-workout .set-note { border-color: #2a2d2b; }
 .focus-workout .set-note textarea { background: #171918; border-color: #333634; color: #fff; }
 .focus-full-workout {

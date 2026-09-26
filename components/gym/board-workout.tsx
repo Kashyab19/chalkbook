@@ -10,6 +10,7 @@ import { Button } from '@/components/boardui/base/buttons/button';
 import { Input } from '@/components/boardui/base/input/input';
 import {
   RiAddLine,
+  RiArrowGoBackLine,
   RiArrowRightLine,
   RiChat1Line,
   RiCheckLine,
@@ -122,6 +123,7 @@ export function BoardWorkout({
   );
   const mark = (j: number, i: number) => {
     const value = session.exercises[j].entries[i];
+    const completed = !value.completed;
     void run(
       [
         {
@@ -129,7 +131,11 @@ export function BoardWorkout({
           id: session.id,
           exercise: j,
           set: i,
-          value: { ...value, completed: !value.completed },
+          value: {
+            ...value,
+            completed,
+            completedAt: completed ? new Date().toISOString() : undefined,
+          },
         },
         interactionAction(),
       ],
@@ -180,6 +186,26 @@ export function BoardWorkout({
       setSwapName('');
     });
   };
+  const orderedExercises = session.exercises
+    .map((exercise, index) => {
+      const complete = exercise.entries.every((entry) => entry.completed);
+      const completedAt = complete
+        ? exercise.entries.reduce(
+            (latest, entry) =>
+              entry.completedAt && entry.completedAt > latest
+                ? entry.completedAt
+                : latest,
+            '',
+          )
+        : '';
+      return { exercise, index, complete, completedAt };
+    })
+    .sort((a, b) => {
+      if (a.complete !== b.complete) return a.complete ? -1 : 1;
+      if (a.complete && b.complete && a.completedAt && b.completedAt)
+        return a.completedAt.localeCompare(b.completedAt);
+      return a.index - b.index;
+    });
   return (
     <div
       className="focus-workout"
@@ -349,20 +375,19 @@ export function BoardWorkout({
       {undo || noteTarget || (currentExercise && next && !finished) ? (
         <div className="focus-quick-actions">
           {undo ? (
-            <Button variant="ghost" disabled={busy || saving} onClick={() =>
+            <Button iconOnly variant="ghost" leadingIcon={RiArrowGoBackLine}
+              aria-label="Undo last set" title="Undo last set" disabled={busy || saving} onClick={() =>
               void run({ type: 'set', id: session.id, ...undo }, () => {
                 setUndo(null); setUntil(0);
               })
-            }>Undo last set</Button>
+            } />
           ) : null}
           {noteTarget || (currentExercise && next && !finished) ? (
-            <Button variant="ghost" leadingIcon={RiChat1Line} disabled={busy || saving}
-              aria-expanded={noteOpen} onClick={() => {
+            <Button iconOnly variant="ghost" leadingIcon={RiChat1Line} disabled={busy || saving}
+              aria-label="Add note" title="Add note" aria-expanded={noteOpen} onClick={() => {
                 if (!noteTarget && currentExercise && next) setNoteTarget({ exercise: nextJ, set: nextI });
                 setNoteOpen((open) => !open);
-              }}>
-              Add note
-            </Button>
+              }} />
           ) : null}
         </div>
       ) : null}
@@ -387,7 +412,7 @@ export function BoardWorkout({
       <details className="focus-full-workout">
         <summary>Full workout <span>{done}/{total} sets</span></summary>
         <div className="focus-exercise-list">
-          {session.exercises.map((exercise, j) => (
+          {orderedExercises.map(({ exercise, index: j }) => (
             <article key={exercise.id}>
               <div className="focus-exercise-heading">
                 <ExerciseArt name={exercise.name} className="focus-list-art" />
@@ -409,9 +434,9 @@ export function BoardWorkout({
                     onClick={() => mark(j, i)} />
                 </div>
               ))}
-              {!finished ? <Button variant="ghost" leadingIcon={RiAddLine} disabled={busy || saving || exercise.entries.length >= 30}
+              <Button variant="ghost" leadingIcon={RiAddLine} disabled={busy || saving || exercise.entries.length >= 30}
                 onClick={() => void run({ type: 'addSet', id: session.id, exercise: j, set: exercise.entries.length,
-                  value: { weightKg: exercise.entries.at(-1)?.weightKg ?? null, reps: exercise.entries.at(-1)?.reps ?? null, completed: false } })}>Add set</Button> : null}
+                  value: { weightKg: exercise.entries.at(-1)?.weightKg ?? null, reps: exercise.entries.at(-1)?.reps ?? null, completed: false } })}>Add set</Button>
               {previous(sessions, exercise.id, session.date) && target(exercise, previous(sessions, exercise.id, session.date)!.exercise.entries).increase ? (
                 <p className="focus-progression">Previous sets reached the rep target. Increase weight when ready.</p>
               ) : null}

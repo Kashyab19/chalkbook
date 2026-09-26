@@ -7,10 +7,11 @@ async function files(dir) {
   return (await Promise.all(entries.map(e => e.isDirectory() ? files(join(dir, e.name)) : [join(dir, e.name)]))).flat();
 }
 const assets = (await files(root)).filter(p => /\.(js|css|woff2?|png|svg|webp|webmanifest)$/.test(p) && !p.endsWith('/sw.js')).sort();
+const precache = assets.filter(p => !p.includes('/exercise-icons-v2/'));
 const hash = createHash('sha256');
 for (const file of assets) hash.update(await readFile(file));
 const template = await readFile('scripts/sw-template.js', 'utf8');
 hash.update(template);
 const version = hash.digest('hex').slice(0, 16);
-await writeFile(join(root, 'sw.js'), template.replace('__VERSION__', version).replace('__ASSETS__', JSON.stringify(assets.map(p => p.slice(root.length)))));
-console.log(`Offline shell ${version}: ${assets.length} assets`);
+await writeFile(join(root, 'sw.js'), template.replace('__VERSION__', version).replace('__PRECACHE__', JSON.stringify(precache.map(p => p.slice(root.length)))).replace('__ASSETS__', JSON.stringify(assets.map(p => p.slice(root.length)))));
+console.log(`Offline shell ${version}: ${precache.length} precached, ${assets.length - precache.length} runtime-cached assets`);

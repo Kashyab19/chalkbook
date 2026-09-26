@@ -1,4 +1,5 @@
 const CACHE = 'gym-shell-__VERSION__';
+const PRECACHE = __PRECACHE__;
 const ASSETS = __ASSETS__;
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -16,7 +17,7 @@ self.addEventListener('install', (event) => {
           !(await shell.clone().text()).includes('Chalkbook')
         )
           throw Error('Notebook shell unavailable');
-        await cache.addAll(ASSETS);
+        await cache.addAll(PRECACHE);
         await cache.put('/', shell);
       } catch (error) {
         await caches.delete(CACHE);
@@ -60,13 +61,12 @@ self.addEventListener('fetch', (event) => {
         ),
     );
   } else if (ASSETS.includes(url.pathname)) {
-    event.respondWith(
-      caches
-        .open(CACHE)
-        .then(
-          async (cache) =>
-            (await cache.match(url.pathname)) || fetch(event.request),
-        ),
-    );
+    event.respondWith(caches.open(CACHE).then(async (cache) => {
+      const cached = await cache.match(url.pathname);
+      if (cached) return cached;
+      const response = await fetch(event.request);
+      if (response.ok) await cache.put(url.pathname, response.clone());
+      return response;
+    }));
   }
 });
