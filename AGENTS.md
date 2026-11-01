@@ -15,6 +15,15 @@
 - Prefer the pull-request-to-`main` workflow for normal releases.
 - Use `pnpm deploy:railway` only for an explicit local emergency/manual deployment. It refuses dirty worktrees and reruns verification.
 
+## Cloud Agent local stack
+
+Cloud Agents boot with a local throwaway Postgres and the Railway Node server on port 4173.
+
+- `DATABASE_URL` points at `127.0.0.1` only. Never point agents at production Railway Postgres.
+- Local sign-in: account `dev-owner`, password `dev-owner-local-only` (also in `~/.chalkbook-dev/dev-owner-password.txt`).
+- Day-to-day checks: `pnpm verify`. App URL while the environment `start` script is running: `http://127.0.0.1:4173`.
+- Do not use `RAILWAY_TOKEN` or production credentials for ordinary agent work.
+
 ## Change safety
 
 - Preserve the existing offline queue, authenticated owner scoping, and database migration conventions.
