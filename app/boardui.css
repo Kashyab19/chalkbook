@@ -1785,10 +1785,15 @@ html[data-accent='coral'] { --app-accent-300: #ffb3a8; --app-accent-400: #ff9586
 .focus-exercise-title h2 { margin: 0; }
 .focus-swap-trigger { display: inline-flex; min-height: 32px; align-items: center; gap: 5px; padding: 6px 9px; border: 1px solid #343735; border-radius: 999px; background: #171918; color: #c8ccc9; font-size: 11px; font-weight: 750; }
 .focus-swap-trigger svg { width: 14px; height: 14px; }
-.focus-swap-form { display: grid; width: min(100%, 500px); grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 7px; margin: 9px auto 11px; padding: 6px; border: 1px solid #343735; border-radius: 15px; background: #151716; }
+.focus-swap-form { display: grid; width: min(100%, 500px); grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "name cancel submit" "scope scope scope"; align-items: center; gap: 7px; margin: 9px auto 11px; padding: 6px; border: 1px solid #343735; border-radius: 15px; background: #151716; }
+.focus-swap-name { grid-area: name; min-width: 0; }
 .focus-swap-form input { min-width: 0; min-height: 40px; }
 .focus-swap-form button { min-height: 40px; padding: 0 11px; border-radius: 10px; color: #bfc4c0; font-size: 12px; font-weight: 750; }
-.focus-swap-form button[type='submit'] { background: var(--app-accent-500); color: #0b0d0b; }
+.focus-swap-cancel { grid-area: cancel; }
+.focus-swap-submit { grid-area: submit; background: var(--app-accent-500); color: #0b0d0b; }
+.focus-swap-scope { grid-area: scope; display: flex; align-items: flex-start; gap: 8px; padding: 1px 6px 3px; color: #9aa09b; font-size: 12px; font-weight: 650; text-align: left; }
+.focus-swap-scope input { width: 16px; height: 16px; min-height: 16px; margin: 1px 0 0; accent-color: var(--app-accent-500); }
+.focus-swap-scope small { display: block; margin-top: 1px; color: #6f756f; font-size: 11px; font-weight: 600; }
 .focus-previous-set { display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 1px solid #353835; color: #b8bdb9; }
 .focus-previous-set span { margin-left: 5px; color: var(--app-accent-400); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
 

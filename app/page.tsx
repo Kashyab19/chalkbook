@@ -35,8 +35,8 @@ import {
   toKg,
   previous,
   newSession,
+  scheduledWorkout,
   target,
-  weekParity,
   type Data,
   type SetLog,
 } from '@/lib/training';
@@ -116,9 +116,7 @@ export default function Home() {
         : status === 'Saved on device'
           ? RiSave3Line
           : RiErrorWarningLine;
-  const scheduled = data.program.find(
-    (d) => d.day === new Date(date + 'T12:00:00').getDay(),
-  );
+  const scheduled = scheduledWorkout(data.program, date);
   const day =
     data.program.find((d) => d.id === chosen) ||
     (!scheduled?.exercises.length
@@ -128,29 +126,8 @@ export default function Home() {
         )
       : undefined) ||
     scheduled;
-  const workoutDay =
-    day?.id === 'pull' && date
-      ? {
-          ...day,
-          exercises:
-            weekParity(date).week % 2
-              ? day.exercises
-              : [
-                  day.exercises[0],
-                  day.exercises[1],
-                  {
-                    id: 't-bar-row',
-                    name: 'T-Bar Row',
-                    sets: 3,
-                    min: 8,
-                    max: 12,
-                  },
-                  ...day.exercises.slice(3),
-                ],
-        }
-      : day;
   const session = data.sessions.find(
-    (s) => s.date === date && s.templateId === workoutDay?.id,
+    (s) => s.date === date && s.templateId === day?.id,
   );
   // Keep the default split aligned with the user's requested recovery pattern.
   // Existing notebooks created before this change are migrated once and synced.
@@ -188,18 +165,18 @@ export default function Home() {
       tab !== 'today' ||
       !loaded ||
       !date ||
-      !workoutDay?.exercises.length ||
+      !day?.exercises.length ||
       session
     )
       return;
-    const id = `${date}_${workoutDay.id}`;
+    const id = `${date}_${day.id}`;
     if (starting.current === id) return;
     starting.current = id;
-    const draft = newSession(date, workoutDay, data.sessions);
+    const draft = newSession(date, day, data.sessions);
     void save({ type: 'start', session: draft }).finally(() => {
       starting.current = '';
     });
-  }, [loaded, date, workoutDay, session, tab, save, data.sessions]);
+  }, [loaded, date, day, session, tab, save, data.sessions]);
   useEffect(() => {
     type ToolContext = {
       registerTool: (
@@ -364,12 +341,7 @@ export default function Home() {
         )}
         <BoardTabPanel id="today">
           <div className="board-workout-heading">
-            <h1>{workoutDay?.name || 'Today'}</h1>
-            {workoutDay?.id === 'pull' && date && (
-              <p className="muted small">
-                {weekParity(date).label} · week {weekParity(date).week}
-              </p>
-            )}
+            <h1>{day?.name || 'Today'}</h1>
             <label className="date-label">
               <span className="sr-only">Workout date</span>
               <input
@@ -390,6 +362,7 @@ export default function Home() {
               key={session.id}
               session={session}
               sessions={data.sessions}
+              program={data.program}
               unit={unit}
               restSeconds={restSeconds}
               save={save}

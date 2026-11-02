@@ -59,16 +59,52 @@ export function dateLabel(s: string) {
     day: 'numeric',
   });
 }
-export function isoWeekNumber(s: string) {
-  const date = new Date(s + 'T12:00:00');
-  const day = date.getDay() || 7;
-  date.setDate(date.getDate() + 4 - day);
-  const yearStart = new Date(date.getFullYear(), 0, 1);
-  return Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+/** The program day scheduled for a calendar date. A session is copied from this
+ * day; one-time edits stay on that session until the program itself is changed. */
+export function scheduledWorkout(program: Day[], date: string): Day | undefined {
+  return program.find(
+    (item) => item.day === new Date(date + 'T12:00:00').getDay(),
+  );
 }
-export function weekParity(s: string) {
-  const week = isoWeekNumber(s);
-  return { week, label: week % 2 ? 'Odd week' : 'Even week' } as const;
+export function swapExerciseInSession(
+  session: Session,
+  index: number,
+  name: string,
+  id: string,
+): Session {
+  return {
+    ...session,
+    exercises: session.exercises.map((exercise, exerciseIndex) =>
+      exerciseIndex === index ? { ...exercise, id, name } : exercise,
+    ),
+  };
+}
+export function replaceProgramExercise(
+  program: Day[],
+  templateId: string,
+  exerciseId: string,
+  index: number,
+  replacement: Exercise,
+): Day[] {
+  const next: Exercise = {
+    id: replacement.id,
+    name: replacement.name,
+    sets: replacement.sets,
+    min: replacement.min,
+    max: replacement.max,
+  };
+  return program.map((day) => {
+    if (day.id !== templateId) return day;
+    const byId = day.exercises.findIndex((exercise) => exercise.id === exerciseId);
+    const target = byId >= 0 ? byId : index;
+    if (target < 0 || target >= day.exercises.length) return day;
+    const exercises = day.exercises.map((exercise, exerciseIndex) =>
+      exerciseIndex === target ? next : exercise,
+    );
+    if (new Set(exercises.map((exercise) => exercise.id)).size !== exercises.length)
+      return day;
+    return { ...day, exercises };
+  });
 }
 const e = (name: string, sets: number, min: number, max: number): Exercise => ({
   id: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
