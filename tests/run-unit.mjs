@@ -13,8 +13,10 @@ for (const file of [
   'lib/sync-error.ts',
   'lib/sync-schedule.ts',
   'lib/exercise-art.ts',
+  'lib/workout-sets.ts',
   'tests/operations.test.ts',
   'tests/offline.test.ts',
+  'tests/workout-sets.test.ts',
 ]) {
   const source = (await readFile(file, 'utf8'))
     .replaceAll("'./training'", "'./training.js'")
@@ -22,7 +24,8 @@ for (const file of [
     .replaceAll('../lib/operations', '../lib/operations.js')
     .replaceAll('../lib/sync-error', '../lib/sync-error.js')
     .replaceAll('../lib/sync-schedule', '../lib/sync-schedule.js')
-    .replaceAll('../lib/exercise-art', '../lib/exercise-art.js');
+    .replaceAll('../lib/exercise-art', '../lib/exercise-art.js')
+    .replaceAll('../lib/workout-sets', '../lib/workout-sets.js');
   await writeFile(
     join(dir, file.replace(/\.ts$/, '.js')),
     ts.transpileModule(source, {
@@ -39,6 +42,7 @@ const result = spawnSync(
     '--test',
     join(dir, 'tests/operations.test.js'),
     join(dir, 'tests/offline.test.js'),
+    join(dir, 'tests/workout-sets.test.js'),
     'tests/shell-assets.test.mjs',
   ],
   { stdio: 'inherit' },
