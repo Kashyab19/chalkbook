@@ -1,0 +1,13 @@
+---
+description: Pull request description style for chalkbook. Always apply when opening or updating PRs.
+alwaysApply: true
+---
+
+# Pull request descriptions
+
+Every PR description must be concise and easy to understand.
+
+- Lead with what changed and why, in one or two short sentences.
+- Skip fluff, process narration, and repeated context the diff already shows.
+- Prefer plain language over jargon; name user-visible impact when there is any.
+- Use a short bullet list only when several distinct changes need separating.
