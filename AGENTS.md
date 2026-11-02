@@ -9,6 +9,12 @@
 - Pull requests are verified by GitHub Actions. Merging to `main` automatically deploys the verified commit to Railway production.
 - Keep `RAILWAY_TOKEN` in GitHub Actions secrets; never commit credentials or connection strings.
 
+## Branching
+
+- Never create branches that start with `cursor/`.
+- Name every branch with `feature/`, `bug/`, or `experiment/`, then a lowercase kebab-case slug.
+- Examples: `feature/offline-retry`, `bug/session-cookie`, `experiment/paper-redesign`.
+
 ## Deployment
 
 - The production URL is `https://os.kashyab.xyz`.
