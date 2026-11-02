@@ -28,6 +28,7 @@ import {
   target,
 } from '@/lib/training';
 import { type Action, validSet } from '@/lib/operations';
+import { currentExerciseAddSet } from '@/lib/workout-sets';
 import { cx } from '@/lib/boardui-cx';
 import { useDeviceDraft } from '@/hooks/use-device-draft';
 import { ExerciseArt } from './exercise-art';
@@ -110,6 +111,13 @@ export function BoardWorkout({
     next = nextJ < 0 ? null : session.exercises[nextJ].entries[nextI];
   const finished = !!session.completedAt;
   const currentExercise = nextJ < 0 ? null : session.exercises[nextJ];
+  const addSet = currentExercise
+    ? currentExerciseAddSet({
+        finished,
+        entryCount: currentExercise.entries.length,
+        exerciseName: currentExercise.name,
+      })
+    : null;
   const currentPrevious = currentExercise
     ? previous(sessions, currentExercise.id, session.date)
     : null;
@@ -231,7 +239,24 @@ export function BoardWorkout({
               <span>Swap</span>
             </button>
           </div>
-          <p className="focus-set-count">Set {nextI + 1} of {currentExercise.entries.length}</p>
+          <div className="focus-set-line">
+            <p className="focus-set-count">Set {nextI + 1} of {currentExercise.entries.length}</p>
+            {addSet ? (
+              <button
+                type="button"
+                className="focus-add-set"
+                aria-label={addSet.accessibleName}
+                disabled={busy || saving}
+                onClick={() => void run({
+                  type: 'addSet', id: session.id, exercise: nextJ,
+                  set: currentExercise.entries.length,
+                  value: { weightKg: next.weightKg, reps: next.reps, completed: false },
+                })}
+              >
+                <RiAddLine aria-hidden /> {addSet.label}
+              </button>
+            ) : null}
+          </div>
           {swapOpen ? (
             <form className="focus-swap-form" onSubmit={(event) => { event.preventDefault(); swapExercise(); }}>
               <Input
@@ -306,20 +331,6 @@ export function BoardWorkout({
           >
             <span>Log set</span><RiArrowRightLine aria-hidden />
           </button>
-          {!finished && currentExercise.entries.length < 30 ? (
-            <button
-              type="button"
-              className="focus-add-set"
-              disabled={busy || saving}
-              onClick={() => void run({
-                type: 'addSet', id: session.id, exercise: nextJ,
-                set: currentExercise.entries.length,
-                value: { weightKg: next.weightKg, reps: next.reps, completed: false },
-              })}
-            >
-              <RiAddLine aria-hidden /> Add another set
-            </button>
-          ) : null}
           {!validSet({ ...next, completed: true }) ? (
             <p className="focus-help">Enter weight and reps to log this set.</p>
           ) : null}

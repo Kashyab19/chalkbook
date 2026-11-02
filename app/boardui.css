@@ -973,10 +973,13 @@ html.dark .sign-in-submit {
     line-height: 0.98;
     text-align: left;
   }
-  .focus-set-count {
+  .focus-set-line {
     grid-column: 2;
     align-self: start;
+    justify-content: flex-start;
     margin: 5px 0 0;
+  }
+  .focus-set-count {
     font-size: 15px;
     text-align: left;
   }
@@ -1197,8 +1200,16 @@ html.dark .sign-in-submit {
   line-height: 0.98;
   letter-spacing: -0.055em;
 }
-.focus-set-count {
+.focus-set-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 10px;
   margin: 10px 0 0;
+}
+.focus-set-count {
+  margin: 0;
   color: #858b87;
   font-size: 18px;
   font-weight: 650;
@@ -1342,8 +1353,23 @@ html.dark .sign-in-submit {
 .focus-up-next strong { flex: 1; font-size: 18px; }
 .focus-up-next svg { width: 24px; color: #a8adaa; }
 .focus-quick-actions { display: flex; justify-content: center; gap: 8px; }
-.focus-add-set { display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin: 8px auto 0; color: #aeb7b1; font-size: 13px; font-weight: 700; }
-.focus-add-set svg { width: 16px; }
+.focus-add-set {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 12px;
+  border: 1px solid #343735;
+  border-radius: 999px;
+  background: #171918;
+  color: #d7dbd8;
+  font-size: 13px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+.focus-add-set svg { width: 16px; height: 16px; color: var(--focus-accent); }
+.focus-add-set:active { transform: scale(0.97); }
 .focus-quick-actions button { color: #c7cbc8; }
 .focus-workout .set-note { border-color: #2a2d2b; }
 .focus-workout .set-note textarea { background: #171918; border-color: #333634; color: #fff; }
@@ -1881,7 +1907,8 @@ html[data-accent='coral'] { --app-accent-300: #ffb3a8; --app-accent-400: #ff9586
   .focus-current { display: grid; grid-template-columns: 112px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 12px; align-items: center; text-align: left; }
   .exercise-art.focus-hero-art { grid-column: 1; grid-row: 1 / 3; width: 112px; height: 112px; border-radius: 18px; }
   .focus-current h2 { grid-column: 2; align-self: end; margin: 0; font-size: clamp(29px, 9vw, 36px); line-height: 0.98; text-align: left; }
-  .focus-set-count { grid-column: 2; align-self: start; margin: 5px 0 0; font-size: 15px; text-align: left; }
+  .focus-set-line { grid-column: 2; align-self: start; justify-content: flex-start; margin: 5px 0 0; }
+  .focus-set-count { margin: 0; font-size: 15px; text-align: left; }
   .focus-previous,
   .focus-fields,
   .focus-log-button,
@@ -1924,7 +1951,8 @@ html[data-accent='coral'] { --app-accent-300: #ffb3a8; --app-accent-400: #ff9586
   .focus-exercise-title h2 { width: auto; min-width: 0; font-size: clamp(30px, 8.4vw, 37px); }
   .focus-swap-trigger { flex: 0 0 auto; min-height: 30px; padding: 5px 8px; }
   .focus-swap-form { margin: 8px 0 10px; }
-  .focus-set-count { margin-top: 5px; font-size: 15px; text-align: center; }
+  .focus-set-line { margin-top: 5px; }
+  .focus-set-count { margin: 0; font-size: 15px; text-align: center; }
   .focus-previous {
     align-self: center;
     justify-self: auto;
