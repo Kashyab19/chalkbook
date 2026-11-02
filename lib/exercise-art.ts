@@ -46,5 +46,9 @@ export function exerciseArtPath(name: string) {
   const match = exerciseArt.find(({ terms }) =>
     terms.some((term) => normalized.includes(term)),
   );
-  return match ? `/exercise-icons-v2/${match.file}` : null;
+  // The PNG masters stay in the repo. The app requests the compressed WebP
+  // copies so a slow connection can paint the current exercise.
+  return match
+    ? `/exercise-icons-v2/${match.file.replace(/\.png$/, '.webp')}`
+    : null;
 }

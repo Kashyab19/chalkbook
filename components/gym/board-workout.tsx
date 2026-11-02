@@ -19,10 +19,13 @@ import {
   RiTimeLine,
 } from '@remixicon/react';
 import {
+  type Day,
   type Session,
   type SetLog,
   type InteractionMetrics,
   display,
+  replaceProgramExercise,
+  swapExerciseInSession,
   toKg,
   previous,
   target,
@@ -35,6 +38,7 @@ import { ExerciseArt } from './exercise-art';
 export function BoardWorkout({
   session,
   sessions,
+  program,
   unit,
   restSeconds,
   save,
@@ -42,6 +46,7 @@ export function BoardWorkout({
 }: {
   session: Session;
   sessions: Session[];
+  program: Day[];
   unit: string;
   restSeconds: number;
   save: (action: Action | Action[]) => Promise<boolean>;
@@ -59,7 +64,8 @@ export function BoardWorkout({
     } | null>(null),
     [noteOpen, setNoteOpen] = useState(false),
     [swapOpen, setSwapOpen] = useState(false),
-    [swapName, setSwapName] = useState('');
+    [swapName, setSwapName] = useState(''),
+    [updateProgram, setUpdateProgram] = useState(false);
   const [until, setUntil] = useDeviceDraft<number>(`rest-${session.id}`, 0);
   const lock = useRef(false);
   const interactions = useRef<InteractionMetrics>(
@@ -169,24 +175,39 @@ export function BoardWorkout({
         setUndo(null);
       },
     );
+  const closeSwap = () => {
+    setSwapOpen(false);
+    setSwapName('');
+    setUpdateProgram(false);
+  };
   const swapExercise = () => {
     const name = swapName.trim();
-    if (!currentExercise || !name || name === currentExercise.name) {
-      setSwapOpen(false);
+    if (!currentExercise || nextJ < 0 || !name || name === currentExercise.name) {
+      closeSwap();
       return;
     }
-    const updated: Session = {
-      ...session,
-      exercises: session.exercises.map((exercise, index) =>
-        index === nextJ
-          ? { ...exercise, id: `custom-${crypto.randomUUID()}`, name }
-          : exercise,
-      ),
-    };
-    void run({ type: 'restoreSession', session: updated }, () => {
-      setSwapOpen(false);
-      setSwapName('');
-    });
+    const id = `custom-${crypto.randomUUID()}`;
+    const updated = swapExerciseInSession(session, nextJ, name, id);
+    const actions: Action[] = [{ type: 'restoreSession', session: updated }];
+    if (updateProgram) {
+      actions.push({
+        type: 'program',
+        program: replaceProgramExercise(
+          program,
+          session.templateId,
+          currentExercise.id,
+          nextJ,
+          {
+            id,
+            name,
+            sets: currentExercise.sets,
+            min: currentExercise.min,
+            max: currentExercise.max,
+          },
+        ),
+      });
+    }
+    void run(actions, closeSwap);
   };
   return (
     <div
@@ -222,7 +243,7 @@ export function BoardWorkout({
 
       {currentExercise && next ? (
         <main className="focus-current" aria-live="polite">
-          <ExerciseArt name={currentExercise.name} className="focus-hero-art" />
+          <ExerciseArt name={currentExercise.name} className="focus-hero-art" priority="high" />
           <div className="focus-exercise-title">
             <h2>{currentExercise.name}</h2>
             <button
@@ -232,6 +253,7 @@ export function BoardWorkout({
               disabled={busy || saving || finished}
               onClick={() => {
                 setSwapName(currentExercise.name);
+                setUpdateProgram(false);
                 setSwapOpen(true);
               }}
             >
@@ -261,13 +283,25 @@ export function BoardWorkout({
             <form className="focus-swap-form" onSubmit={(event) => { event.preventDefault(); swapExercise(); }}>
               <Input
                 autoFocus
+                className="focus-swap-name"
                 aria-label="Replacement exercise name"
                 value={swapName}
                 maxLength={100}
                 onChange={(value) => setSwapName(value)}
               />
-              <button type="button" onClick={() => setSwapOpen(false)}>Cancel</button>
-              <button type="submit" disabled={!swapName.trim() || busy || saving}>Use</button>
+              <label className="focus-swap-scope">
+                <input
+                  type="checkbox"
+                  checked={updateProgram}
+                  onChange={(event) => setUpdateProgram(event.target.checked)}
+                />
+                <span>
+                  Also update the program
+                  <small>Off keeps this change on this workout</small>
+                </span>
+              </label>
+              <button className="focus-swap-cancel" type="button" onClick={closeSwap}>Cancel</button>
+              <button className="focus-swap-submit" type="submit" disabled={!swapName.trim() || busy || saving}>Use</button>
             </form>
           ) : previousSet?.completed && previousSet.weightKg != null && previousSet.reps != null ? (
             <button

@@ -4,6 +4,9 @@ import {
   defaultProgram,
   newSession,
   previous,
+  replaceProgramExercise,
+  scheduledWorkout,
+  swapExerciseInSession,
   target,
   display,
   toKg,
@@ -233,4 +236,112 @@ void test('extra sets preserve planned sets, survive backups, and do not duplica
   assert.throws(() =>
     validateAction({ ...add, value: { ...add.value, completed: true } }),
   );
+});
+void test('a one-time exercise swap leaves the template and later workouts unchanged', () => {
+  const program = structuredClone(defaultProgram);
+  const wednesday = '2026-09-02';
+  const nextEvenWednesday = '2026-09-16';
+  const pull = scheduledWorkout(program, wednesday);
+  assert.equal(pull?.id, 'pull');
+  assert.equal(pull?.exercises[2].name, 'Rear Delt Fly');
+  assert.equal(
+    scheduledWorkout(program, nextEvenWednesday)?.exercises[2].name,
+    'Rear Delt Fly',
+  );
+  assert.equal(
+    scheduledWorkout(program, '2026-09-09')?.exercises.some(
+      (exercise) => exercise.id === 't-bar-row',
+    ),
+    false,
+  );
+
+  const session = newSession(wednesday, pull!, []);
+  const swapped = swapExerciseInSession(
+    session,
+    2,
+    'Cable Rear Delt',
+    'custom-rear-delt',
+  );
+  let data = applyAction(blank(), { type: 'start', session });
+  const future = newSession(
+    nextEvenWednesday,
+    scheduledWorkout(program, nextEvenWednesday)!,
+    [],
+  );
+  data = applyAction(data, { type: 'start', session: future });
+  data = applyAction(data, { type: 'restoreSession', session: swapped });
+
+  assert.equal(data.sessions.find((item) => item.date === wednesday)?.exercises[2].name, 'Cable Rear Delt');
+  assert.equal(
+    data.program.find((day) => day.id === 'pull')?.exercises[2].name,
+    'Rear Delt Fly',
+  );
+  assert.equal(
+    data.sessions.find((item) => item.date === nextEvenWednesday)?.exercises[2]
+      .name,
+    'Rear Delt Fly',
+  );
+  const later = newSession(
+    '2026-09-23',
+    scheduledWorkout(data.program, '2026-09-23')!,
+    data.sessions,
+  );
+  assert.equal(later.exercises[2].id, 'rear-delt-fly');
+  assert.equal(later.exercises[2].name, 'Rear Delt Fly');
+});
+void test('updating the program is explicit and does not rewrite other sessions', () => {
+  const program = structuredClone(defaultProgram);
+  const wednesday = '2026-09-09';
+  const futureDate = '2026-09-16';
+  const day = scheduledWorkout(program, wednesday)!;
+  const session = newSession(wednesday, day, []);
+  const future = newSession(
+    futureDate,
+    scheduledWorkout(program, futureDate)!,
+    [],
+  );
+  let data = applyAction(blank(), { type: 'start', session });
+  data = applyAction(data, { type: 'start', session: future });
+  const replacement = {
+    id: 'custom-rear-delt',
+    name: 'Cable Rear Delt',
+    sets: session.exercises[2].sets,
+    min: session.exercises[2].min,
+    max: session.exercises[2].max,
+  };
+  const swapped = swapExerciseInSession(session, 2, replacement.name, replacement.id);
+  const nextProgram = replaceProgramExercise(
+    program,
+    'pull',
+    'rear-delt-fly',
+    2,
+    replacement,
+  );
+  validateAction({ type: 'program', program: nextProgram });
+  data = applyAction(data, { type: 'restoreSession', session: swapped });
+  data = applyAction(data, { type: 'program', program: nextProgram });
+
+  assert.equal(
+    data.sessions.find((item) => item.date === wednesday)?.exercises[2].name,
+    'Cable Rear Delt',
+  );
+  assert.deepEqual(
+    data.program.find((item) => item.id === 'pull')?.exercises[2],
+    replacement,
+  );
+  assert.equal(
+    data.program.find((item) => item.id === 'push')?.exercises.length,
+    defaultProgram.find((item) => item.id === 'push')?.exercises.length,
+  );
+  assert.equal(
+    data.sessions.find((item) => item.date === futureDate)?.exercises[2].name,
+    'Rear Delt Fly',
+  );
+  const createdAfter = newSession(
+    '2026-09-23',
+    scheduledWorkout(data.program, '2026-09-23')!,
+    data.sessions,
+  );
+  assert.equal(createdAfter.exercises[2].name, 'Cable Rear Delt');
+  assert.equal(createdAfter.exercises[2].id, 'custom-rear-delt');
 });

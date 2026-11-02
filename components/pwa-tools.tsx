@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { type Data } from '@/lib/training';
 import { parseBackup, type Action } from '@/lib/operations';
 import { transact } from '@/lib/notebook-store';
@@ -8,112 +8,24 @@ type Props = {
   data: Data | null | undefined;
   pending: number;
   save: (actions: Action[]) => Promise<boolean>;
-  sync: () => Promise<void>;
   open?: boolean;
-  onUpdateReady?: (apply: (() => void) | null) => void;
+  offlineReady?: boolean;
+  updateReady?: boolean;
+  applyUpdate?: () => void;
+  runtimeMessage?: string;
 };
 export function PwaTools({
   data,
   pending,
   save,
-  sync,
   open = false,
-  onUpdateReady,
+  offlineReady = false,
+  updateReady = false,
+  applyUpdate,
+  runtimeMessage = '',
 }: Props) {
-  const [offlineReady, setOfflineReady] = useState(false);
-  const [update, setUpdate] = useState(false);
   const [message, setMessage] = useState('');
   const [backup, setBackup] = useState<Data>();
-  const registration = useRef<ServiceWorkerRegistration | null>(null);
-  const reloadAfterUpdate = useRef(false);
-  const applyUpdate = () => {
-    if (!registration.current?.waiting) return;
-    reloadAfterUpdate.current = true;
-    registration.current.waiting.postMessage({ type: 'skip-waiting' });
-  };
-  const shellIsCached = async () => {
-    if (!('caches' in window)) return false;
-    const keys = await caches.keys();
-    const shell = keys.find((key) => key.startsWith('gym-shell-'));
-    return (
-      !!shell &&
-      !!(await caches.open(shell)).match(new URL('/', location.href).toString())
-    );
-  };
-  useEffect(() => {
-    const viewport = window.visualViewport;
-    let controllerChanged: (() => void) | undefined;
-    const resize = () => {
-      const keyboard = !!viewport && window.innerHeight - viewport.height > 150;
-      document.documentElement.style.setProperty(
-        '--keyboard-offset',
-        keyboard
-          ? `${Math.max(0, window.innerHeight - viewport!.height - viewport!.offsetTop)}px`
-          : '0px',
-      );
-      if (keyboard && document.activeElement instanceof HTMLInputElement)
-        requestAnimationFrame(() =>
-          document.activeElement?.scrollIntoView({
-            block: 'center',
-            behavior: 'auto',
-          }),
-        );
-    };
-    viewport?.addEventListener('resize', resize);
-    viewport?.addEventListener('scroll', resize);
-    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
-      controllerChanged = () => {
-        setUpdate(false);
-        onUpdateReady?.(null);
-        // Reload only after the person explicitly chose Update. Background
-        // service-worker activity must never interrupt a workout.
-        if (reloadAfterUpdate.current) location.reload();
-      };
-      navigator.serviceWorker.addEventListener(
-        'controllerchange',
-        controllerChanged,
-      );
-      void navigator.serviceWorker
-        .register('/sw.js', { scope: '/', updateViaCache: 'none' })
-        .then((nextRegistration) => {
-          registration.current = nextRegistration;
-          const inspect = async () => {
-            // An active worker alone is not enough: a failed install can leave
-            // a worker present without a complete shell for the next offline
-            // launch. Only promise offline use after the root shell is cached.
-            setOfflineReady(
-              !!navigator.serviceWorker.controller && (await shellIsCached()),
-            );
-            const ready = !!nextRegistration.waiting;
-            setUpdate(ready);
-            onUpdateReady?.(ready ? applyUpdate : null);
-          };
-          void inspect();
-          nextRegistration.addEventListener('updatefound', () =>
-            nextRegistration.installing?.addEventListener('statechange', () =>
-              void inspect(),
-            ),
-          );
-          void navigator.serviceWorker.ready.then(() => void inspect());
-          void nextRegistration.update().catch(() => {});
-        })
-        .catch(() =>
-          setMessage(
-            'Offline setup has not finished. Reconnect and reopen before training offline.',
-          ),
-        );
-    }
-    return () => {
-      viewport?.removeEventListener('resize', resize);
-      viewport?.removeEventListener('scroll', resize);
-      if (controllerChanged)
-        navigator.serviceWorker?.removeEventListener(
-          'controllerchange',
-          controllerChanged,
-        );
-      onUpdateReady?.(null);
-    };
-  }, []);
   if (!open) return null;
   async function exportBackup() {
     try {
@@ -181,7 +93,7 @@ export function PwaTools({
             In Safari, tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>.
             Open Chalkbook online once before taking it offline.
           </p>
-          {update && (
+          {updateReady && applyUpdate && (
             <p className="device-update">
               A new version is ready. Finish your entry, then{' '}
               <button className="text-button" onClick={applyUpdate}>update now</button>.
@@ -249,7 +161,9 @@ export function PwaTools({
           Restoring a backup only replaces matching records.
         </p>
       </details>
-      {message && <output className="settings-message">{message}</output>}
+      {(message || runtimeMessage) && (
+        <output className="settings-message">{message || runtimeMessage}</output>
+      )}
     </section>
   );
 }
