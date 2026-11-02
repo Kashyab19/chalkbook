@@ -17,6 +17,12 @@ import {
 import { type Data } from '@/lib/training';
 import { deviceOwner } from '@/lib/device-account';
 import { syncRequestError } from '@/lib/sync-error';
+import {
+  backoffDelayMs,
+  decideSync,
+  isAuthSyncError,
+  SYNC_REQUEST_TIMEOUT_MS,
+} from '@/lib/sync-schedule';
 
 async function request(operation?: Operation): Promise<Data | { ok: boolean }> {
   let response: Response;
@@ -30,7 +36,7 @@ async function request(operation?: Operation): Promise<Data | { ok: boolean }> {
         ...(deviceOwner() ? { 'X-Notebook-Owner': deviceOwner()! } : {}),
       },
       body: operation ? JSON.stringify(operation) : undefined,
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(SYNC_REQUEST_TIMEOUT_MS),
     });
   } catch (error) {
     throw syncRequestError(error);
@@ -63,36 +69,63 @@ export function useNotebook() {
   const [initializing, setInitializing] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState('');
+  const [syncPaused, setSyncPaused] = useState(false);
   const [localError, setLocalError] = useState('');
   const [writingLocally, setWritingLocally] = useState(false);
   const [recovered, setRecovered] = useState(false);
   const running = useRef<Promise<void> | null>(null);
   const again = useRef(false);
   const writing = useRef(0);
+  const failures = useRef(0);
+  const nextAttemptAt = useRef(0);
   const channel = useRef<BroadcastChannel | null>(null);
+  const runSyncRef = useRef<(force?: boolean) => Promise<void>>(async () => {});
   const publish = useCallback((s: Snapshot) => {
     if (writing.current) return;
     setSnapshot((current) =>
       !current || s.revision >= current.revision ? s : current,
     );
   }, []);
-  const sync = useCallback(() => {
+  const runSync = useCallback((force = false) => {
     if (running.current) {
       again.current = true;
       return running.current;
+    }
+    const decision = decideSync({
+      now: Date.now(),
+      nextAttemptAt: nextAttemptAt.current,
+      online: navigator.onLine,
+      force,
+    });
+    if (decision.type === 'wait') return Promise.resolve();
+    if (decision.type === 'offline') {
+      setSyncPaused(true);
+      return Promise.resolve();
     }
     running.current = (async () => {
       setSyncing(true);
       try {
         do {
           again.current = false;
+          if (!navigator.onLine) {
+            setSyncPaused(true);
+            return;
+          }
           let s = await transact();
           publish(s);
           while (s.pending.length) {
+            if (!navigator.onLine) {
+              setSyncPaused(true);
+              return;
+            }
             const op = s.pending[0];
             await request(op);
             s = await acknowledge(op.id);
             publish(s);
+          }
+          if (!navigator.onLine) {
+            setSyncPaused(true);
+            return;
           }
           const revision = s.revision;
           const data = (await request()) as Data;
@@ -100,18 +133,37 @@ export function useNotebook() {
           s = result.snapshot;
           publish(s);
           if (s.pending.length || !result.merged) again.current = true;
+          failures.current = 0;
+          nextAttemptAt.current = 0;
+          setSyncPaused(false);
           setError('');
         } while (again.current && navigator.onLine);
-        channel.current?.postMessage('refresh');
+        if (!navigator.onLine) setSyncPaused(true);
       } catch (e) {
-        setError((e as Error).message);
+        if (isAuthSyncError(e)) {
+          failures.current = 0;
+          nextAttemptAt.current = 0;
+          setSyncPaused(false);
+          setError(e.message);
+        } else {
+          // One timed-out request is enough. Logging stays local, and the next
+          // set or the foreground retry sends the same operation ids again.
+          failures.current += 1;
+          nextAttemptAt.current = Date.now() + backoffDelayMs(failures.current);
+          setSyncPaused(true);
+          setError('');
+        }
       } finally {
         setSyncing(false);
+        const followUp = again.current;
+        again.current = false;
         running.current = null;
+        if (followUp) void runSyncRef.current(false);
       }
     })();
     return running.current;
   }, [publish]);
+  const sync = useCallback(() => runSyncRef.current(true), []);
   const save = useCallback(
     async (action: Action | Action[]) => {
       const actions = Array.isArray(action) ? action : [action];
@@ -135,7 +187,7 @@ export function useNotebook() {
         publish(s);
         setLocalError('');
         channel.current?.postMessage('refresh');
-        void sync();
+        void runSyncRef.current(false);
         return true;
       } catch (e) {
         writing.current--;
@@ -148,8 +200,11 @@ export function useNotebook() {
         return false;
       }
     },
-    [publish, sync],
+    [publish],
   );
+  useEffect(() => {
+    runSyncRef.current = runSync;
+  }, [runSync]);
   useEffect(() => {
     void (async () => {
       try {
@@ -159,7 +214,14 @@ export function useNotebook() {
         if (await recover()) setRecovered(true);
         const snapshot = await transact();
         publish(snapshot);
-        await sync();
+        // A notebook already on the device opens immediately. The network is
+        // only allowed to delay the first paint when there is nothing local yet.
+        if (snapshot.data) {
+          setInitializing(false);
+          void runSyncRef.current(false);
+        } else {
+          await runSyncRef.current(false);
+        }
       } catch (e) {
         setLocalError(String(e));
       } finally {
@@ -168,21 +230,23 @@ export function useNotebook() {
     })();
     const foreground = () => {
       if (document.visibilityState === 'visible') {
-        void sync();
+        void runSyncRef.current(false);
         void navigator.storage?.persist?.().catch(() => {});
       }
     };
     const online = () => {
-      void sync();
+      void runSyncRef.current(true);
     };
+    const offline = () => setSyncPaused(true);
     const storageError = (event: Event) =>
       setLocalError((event as CustomEvent<string>).detail);
     window.addEventListener('gym-storage-error', storageError);
     window.addEventListener('online', online);
+    window.addEventListener('offline', offline);
     document.addEventListener('visibilitychange', foreground);
     const timer = window.setInterval(() => {
       if (document.visibilityState === 'visible' && navigator.onLine)
-        void sync();
+        void runSyncRef.current(false);
     }, 30000);
     if ('BroadcastChannel' in window) {
       channel.current = new BroadcastChannel('gym-notebook');
@@ -193,11 +257,12 @@ export function useNotebook() {
     return () => {
       window.removeEventListener('gym-storage-error', storageError);
       window.removeEventListener('online', online);
+      window.removeEventListener('offline', offline);
       document.removeEventListener('visibilitychange', foreground);
       clearInterval(timer);
       channel.current?.close();
     };
-  }, [publish, sync]);
+  }, [publish]);
   return {
     data: snapshot?.data,
     initializing,
@@ -205,6 +270,7 @@ export function useNotebook() {
     sync,
     localError,
     error,
+    syncPaused,
     pending: snapshot?.pending.length ?? 0,
     recovered,
     status: localError
@@ -213,7 +279,7 @@ export function useNotebook() {
         ? 'Saving on device…'
         : syncing
           ? 'Syncing'
-          : snapshot?.pending.length || error
+          : snapshot?.pending.length || syncPaused || error
             ? 'Saved on device'
             : snapshot?.lastSync
               ? 'Synced'

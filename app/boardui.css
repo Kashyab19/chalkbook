@@ -1310,6 +1310,14 @@ html.dark .sign-in-submit {
   background: linear-gradient(145deg, #1d201e, #141615);
   box-shadow: 0 12px 28px rgb(0 0 0 / 0.2);
 }
+.notebook.boardui .focus-rest {
+  position: fixed;
+  z-index: 40;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: calc(84px + env(safe-area-inset-bottom));
+  left: max(12px, env(safe-area-inset-left));
+  margin: 0;
+}
 .focus-rest > svg {
   width: 52px;
   height: 52px;

@@ -1236,6 +1236,10 @@ output {
   color: var(--muted-foreground);
   font-size: 14px;
 }
+.notebook-loading .loading-copy {
+  max-width: 320px;
+  padding: 0 24px;
+}
 .loading-mark {
   display: flex;
   align-items: center;
