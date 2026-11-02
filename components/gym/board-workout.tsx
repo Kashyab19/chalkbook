@@ -235,7 +235,7 @@ export function BoardWorkout({
 
       {currentExercise && next ? (
         <main className="focus-current" aria-live="polite">
-          <ExerciseArt name={currentExercise.name} className="focus-hero-art" />
+          <ExerciseArt name={currentExercise.name} className="focus-hero-art" priority="high" />
           <div className="focus-exercise-title">
             <h2>{currentExercise.name}</h2>
             <button

@@ -5,6 +5,7 @@ import {
 } from 'node:http';
 import { stat } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
+import { createGzip } from 'node:zlib';
 import { resolve, extname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { authenticate, login, logout } from './auth';
@@ -192,13 +193,35 @@ const server = createServer(async (req, res) => {
         : 'no-cache',
     );
     if (url.pathname === '/sw.js') res.setHeader('Service-Worker-Allowed', '/');
-    res.setHeader('Content-Length', info.size);
+    const compressible = new Set([
+      '.html',
+      '.js',
+      '.css',
+      '.json',
+      '.webmanifest',
+      '.svg',
+    ]);
+    const accept = req.headers['accept-encoding'];
+    const gzip =
+      compressible.has(extname(path)) &&
+      (Array.isArray(accept) ? accept.join(',') : (accept ?? '')).includes(
+        'gzip',
+      );
+    // The first visit on a slow link otherwise downloads the raw bundle.
+    // Browsers decode gzip before a service worker caches the response.
+    if (gzip) {
+      res.setHeader('Content-Encoding', 'gzip');
+      res.setHeader('Vary', 'Accept-Encoding');
+    } else res.setHeader('Content-Length', info.size);
     res.writeHead(200);
-    if (req.method === 'HEAD') res.end();
-    else
-      createReadStream(path)
-        .on('error', () => res.destroy())
-        .pipe(res);
+    if (req.method === 'HEAD') {
+      res.end();
+      return;
+    }
+    const stream = createReadStream(path);
+    stream.on('error', () => res.destroy());
+    if (gzip) stream.pipe(createGzip()).pipe(res);
+    else stream.pipe(res);
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
     if (message === 'RATE_LIMIT') {

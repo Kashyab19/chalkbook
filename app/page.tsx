@@ -41,6 +41,7 @@ import {
   type SetLog,
 } from '@/lib/training';
 import { useNotebook } from '@/hooks/use-notebook';
+import { OfflineRuntime } from '@/components/offline-runtime';
 import { PwaTools } from '@/components/pwa-tools';
 import { SignIn } from '@/components/sign-in';
 const blank: Data = { program: [], sessions: [], body: [] };
@@ -55,7 +56,9 @@ export default function Home() {
     [unit, setUnit] = useState('lb'),
     [restSeconds, setRestSeconds] = useState(60),
     [accent, setAccent] = useState('lime'),
-    [applyUpdate, setApplyUpdate] = useState<(() => void) | null>(null);
+    [applyUpdate, setApplyUpdate] = useState<(() => void) | null>(null),
+    [offlineReady, setOfflineReady] = useState(false),
+    [runtimeMessage, setRuntimeMessage] = useState('');
   useEffect(() => {
     // Client-only date initialization avoids timezone differences during Sites hydration.
     // eslint-disable-next-line react/react-compiler
@@ -238,9 +241,31 @@ export default function Home() {
     ).catch(() => {});
     return () => controller.abort();
   }, [save]);
-  if (notebook.initializing) return <NotebookLoading />;
+  const runtime = (
+    <OfflineRuntime
+      onUpdateReady={(apply) => setApplyUpdate(() => apply)}
+      onOfflineReady={setOfflineReady}
+      onMessage={setRuntimeMessage}
+    />
+  );
+  if (notebook.initializing)
+    return (
+      <>
+        {runtime}
+        <NotebookLoading />
+      </>
+    );
+  if (!loaded && !notebook.error && notebook.syncPaused)
+    return (
+      <>
+        {runtime}
+        <NotebookOffline onRetry={() => void notebook.sync()} />
+      </>
+    );
   if (!loaded)
     return (
+      <>
+        {runtime}
       <main className="auth-page">
         <header className="auth-brand">
           {/* Static local art is already compressed and dimensioned. */}
@@ -264,8 +289,11 @@ export default function Home() {
           )}
         </div>
       </main>
+      </>
     );
   return (
+    <>
+    {runtime}
     <main className="notebook boardui">
       <header className="board-header">
         <div className="board-brand">
@@ -379,7 +407,7 @@ export default function Home() {
                   month: 'short', day: 'numeric', year: 'numeric',
                 }).format(new Date(`${date}T12:00:00`)) : ''}</time>
               </header>
-              <ExerciseArt name="Plank" className="rest-day-art" />
+              <ExerciseArt name="Plank" className="rest-day-art" priority="high" />
               <div className="rest-day-copy">
                 <span>Recovery is training, too.</span>
                 <h3>Take the win.</h3>
@@ -480,9 +508,11 @@ export default function Home() {
               data={notebook.data}
               save={save}
               pending={notebook.pending}
-              sync={notebook.sync}
               open
-              onUpdateReady={(apply) => setApplyUpdate(() => apply)}
+              offlineReady={offlineReady}
+              updateReady={!!applyUpdate}
+              applyUpdate={applyUpdate ?? undefined}
+              runtimeMessage={runtimeMessage}
             />
 
             <section className="settings-section" aria-labelledby="account-settings-title">
@@ -503,6 +533,31 @@ export default function Home() {
           </section>
         </BoardTabPanel>
       </BoardTabs>
+    </main>
+    </>
+  );
+}
+function NotebookOffline({ onRetry }: { onRetry: () => void }) {
+  return (
+    <main className="notebook-loading" aria-live="polite">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        className="loading-logo"
+        src="/brand/repwise-mark.png"
+        alt=""
+        width="88"
+        height="88"
+      />
+      <div className="loading-copy">
+        <strong>Chalkbook</strong>
+        <p>
+          This device does not have your notebook yet. Connect once, then it
+          can open at the gym with no signal.
+        </p>
+        <button className="primary" onClick={onRetry}>
+          Try again
+        </button>
+      </div>
     </main>
   );
 }
