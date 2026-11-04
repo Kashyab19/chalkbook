@@ -2,12 +2,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   commit,
-  recover,
+  loadLocal,
   transact,
   acknowledge,
   mergeServer,
   type Snapshot,
 } from '@/lib/notebook-store';
+import { flushPending } from '@/lib/sync-flush';
 import {
   applyAction,
   validateAction,
@@ -113,16 +114,20 @@ export function useNotebook() {
           }
           let s = await transact();
           publish(s);
-          while (s.pending.length) {
-            if (!navigator.onLine) {
-              setSyncPaused(true);
-              return;
-            }
-            const op = s.pending[0];
-            await request(op);
-            s = await acknowledge(op.id);
-            publish(s);
+          const flushed = await flushPending({
+            snapshot: s,
+            post: async (operation) => {
+              await request(operation);
+            },
+            acknowledge,
+            online: () => navigator.onLine,
+            publish,
+          });
+          if (flushed.paused) {
+            setSyncPaused(true);
+            return;
           }
+          s = flushed.snapshot;
           if (!navigator.onLine) {
             setSyncPaused(true);
             return;
@@ -211,8 +216,9 @@ export function useNotebook() {
         // Do this before the first read. It is a no-op on browsers that do not
         // expose persistent storage, but improves iOS/Android eviction odds.
         void navigator.storage?.persist?.().catch(() => {});
-        if (await recover()) setRecovered(true);
-        const snapshot = await transact();
+        const loaded = await loadLocal();
+        if (loaded.recovered) setRecovered(true);
+        const snapshot = loaded.snapshot;
         publish(snapshot);
         // A notebook already on the device opens immediately. The network is
         // only allowed to delay the first paint when there is nothing local yet.

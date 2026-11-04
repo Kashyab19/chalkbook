@@ -7,6 +7,8 @@ import {
   type Action,
   type Operation,
 } from './operations';
+import { createOrderedBackground } from './ordered-background';
+import { assembleStartupSnapshot } from './startup-snapshot';
 
 export type Snapshot = {
   data: Data | null;
@@ -24,6 +26,7 @@ const empty = (): Snapshot => ({
   lastSync: null,
 });
 let opening: Promise<IDBDatabase> | undefined;
+const recoveryMirrors = createOrderedBackground();
 
 // IndexedDB is the source of truth. This is a deliberately small second local
 // copy of the same committed snapshot: it gives us a recovery path if a browser
@@ -61,22 +64,39 @@ function validRecovery(value: unknown): value is Snapshot {
   }
 }
 
-export async function recover() {
-  if (!deviceOwner() || !('caches' in window)) return false;
+async function readRecoverySnapshot(): Promise<Snapshot | null> {
+  if (!deviceOwner() || !('caches' in globalThis)) return null;
   try {
-    const response = await (await caches.open(recoveryCache)).match(recoveryKey());
-    const recovered = response ? await response.json().catch(() => null) : null;
-    if (!validRecovery(recovered)) return false;
-    let used = false;
-    await transact((current) => {
-      if (current.data) return current;
-      used = true;
-      return recovered;
-    });
-    return used;
+    const cache = await caches.open(recoveryCache);
+    const response = await cache.match(recoveryKey());
+    if (!response) return null;
+    const value: unknown = await response.json().catch(() => null);
+    return validRecovery(value) ? value : null;
   } catch {
-    return false;
+    return null;
   }
+}
+export function loadLocal() {
+  return assembleStartupSnapshot({
+    readDatabase: () => transact(),
+    readRecovery: readRecoverySnapshot,
+    writeIfEmpty: async (candidate) => {
+      let used = false;
+      const snapshot = await transact((current) => {
+        if (current.data) return current;
+        used = true;
+        return candidate;
+      });
+      return { snapshot, used };
+    },
+    mirror: (snapshot) => {
+      recoveryMirrors.enqueue(() => mirrorRecovery(snapshot));
+    },
+  });
+}
+export async function recover() {
+  if (!deviceOwner() || !('caches' in globalThis)) return false;
+  return (await loadLocal()).recovered;
 }
 function database() {
   return (opening ??= new Promise<IDBDatabase>((resolve, reject) => {
@@ -140,7 +160,9 @@ export async function transact(
         error ?? tx.error ?? Error('Device storage could not save this edit.'),
       );
   });
-  if (change) await mirrorRecovery(snapshot);
+  // IndexedDB is the save. Mirror the snapshot afterwards, in order, so logging
+  // a set does not wait on Cache Storage and an older copy cannot finish last.
+  if (change) recoveryMirrors.enqueue(() => mirrorRecovery(snapshot));
   return snapshot;
 }
 export async function commit(actions: Action[]) {

@@ -19,28 +19,38 @@ self.addEventListener('install', (event) => {
     (async () => {
       const cache = await caches.open(CACHE);
       try {
-        const shell = await fetch(
-          new Request('/', { cache: 'reload', credentials: 'same-origin' }),
-        );
-        // Never cache a sign-in redirect or failed response as the notebook shell.
-        if (
-          !shell.ok ||
-          shell.redirected ||
-          !shell.headers.get('content-type')?.includes('text/html') ||
-          !(await shell.clone().text()).includes('Chalkbook')
-        )
-          throw Error('Notebook shell unavailable');
-        await cache.put('/', shell);
-        // Only the HTML, JS, CSS, and manifest block installation. iOS will
-        // kill a service worker whose install handler downloads the art set,
+        // HTML, JS, CSS, and the manifest do not depend on each other. The art
+        // set stays out of install: iOS kills a worker that downloads it here,
         // and one failed response used to delete the entire shell.
-        for (const path of CRITICAL) {
-          const response = await fetch(
-            new Request(path, { cache: 'reload', credentials: 'same-origin' }),
-          );
-          if (!cacheable(response)) throw Error(`Shell asset unavailable: ${path}`);
-          await cache.put(path, response);
-        }
+        const shellPromise = fetch(
+          new Request('/', { cache: 'reload', credentials: 'same-origin' }),
+        ).then(async (shell) => {
+          // Never cache a sign-in redirect or failed response as the notebook shell.
+          if (
+            !shell.ok ||
+            shell.redirected ||
+            !shell.headers.get('content-type')?.includes('text/html') ||
+            !(await shell.clone().text()).includes('Chalkbook')
+          )
+            throw Error('Notebook shell unavailable');
+          return shell;
+        });
+        const assets = await Promise.all([
+          shellPromise,
+          ...CRITICAL.map(async (path) => {
+            const response = await fetch(
+              new Request(path, { cache: 'reload', credentials: 'same-origin' }),
+            );
+            if (!cacheable(response))
+              throw Error(`Shell asset unavailable: ${path}`);
+            return { path, response };
+          }),
+        ]);
+        const [shell, ...files] = assets;
+        await Promise.all([
+          cache.put('/', shell),
+          ...files.map(({ path, response }) => cache.put(path, response)),
+        ]);
       } catch (error) {
         await caches.delete(CACHE);
         throw error;
@@ -52,6 +62,8 @@ self.addEventListener('install', (event) => {
 let warming = null;
 async function warm(cacheName, paths) {
   const cache = await caches.open(cacheName);
+  // One file at a time, and stop at the first network error. A weak gym link
+  // should not be asked for every remaining icon after it has already failed.
   for (const path of paths) {
     if (await cache.match(path)) continue;
     let response;
@@ -87,8 +99,12 @@ self.addEventListener('message', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
-      for (const key of await caches.keys())
-        if (key.startsWith('gym-shell-') && key !== CACHE) await caches.delete(key);
+      const keys = await caches.keys();
+      await Promise.all(
+        keys
+          .filter((key) => key.startsWith('gym-shell-') && key !== CACHE)
+          .map((key) => caches.delete(key)),
+      );
       // gym-art-v1 is kept across shell updates so icons are not downloaded again.
       await self.clients.claim();
     })(),
@@ -117,9 +133,11 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       (async () => {
         try {
-          const cache = await caches.open(CACHE);
           // ignoreSearch: an installed iOS home-screen launch can add a query.
-          const cached = await cache.match('/', { ignoreSearch: true });
+          const cached = await caches.match('/', {
+            cacheName: CACHE,
+            ignoreSearch: true,
+          });
           if (cached) return cached;
           return await fetch(event.request);
         } catch {
@@ -139,14 +157,17 @@ self.addEventListener('fetch', (event) => {
   if (!art && !SHELL.has(url.pathname)) return;
   event.respondWith(
     (async () => {
-      const cache = await caches.open(art ? ART_CACHE : CACHE);
-      const cached = await cache.match(url.pathname);
+      const cacheName = art ? ART_CACHE : CACHE;
+      const cached = await caches.match(url.pathname, { cacheName });
       if (cached) return cached;
+      const opening = caches.open(cacheName);
       try {
         const fresh = await fetch(event.request);
-        if (cacheable(fresh)) await cache.put(url.pathname, fresh.clone());
+        if (cacheable(fresh)) await (await opening).put(url.pathname, fresh.clone());
+        else void opening.catch(() => {});
         return fresh;
       } catch {
+        void opening.catch(() => {});
         // A rejected respondWith becomes the browser's offline error page on
         // iOS. An empty miss lets <img> fall back without taking down the shell.
         return new Response('', { status: 504, statusText: 'Offline' });
