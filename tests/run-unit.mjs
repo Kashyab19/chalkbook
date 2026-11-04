@@ -7,6 +7,10 @@ const dir = await mkdtemp(join(tmpdir(), 'gym-tests-'));
 await mkdir(join(dir, 'lib'));
 await mkdir(join(dir, 'tests'));
 await writeFile(join(dir, 'package.json'), '{"type":"module"}');
+const rewrite = (source) =>
+  source.replaceAll(/from '(\.[^']+)'/g, (full, spec) =>
+    spec.endsWith('.js') ? full : `from '${spec}.js'`,
+  );
 for (const file of [
   'lib/training.ts',
   'lib/operations.ts',
@@ -14,18 +18,17 @@ for (const file of [
   'lib/sync-schedule.ts',
   'lib/exercise-art.ts',
   'lib/workout-sets.ts',
+  'lib/notebook-round-trips.ts',
+  'lib/login-round-trips.ts',
+  'lib/startup-snapshot.ts',
+  'lib/ordered-background.ts',
+  'lib/sync-flush.ts',
   'tests/operations.test.ts',
   'tests/offline.test.ts',
   'tests/workout-sets.test.ts',
+  'tests/hot-path-latency.test.ts',
 ]) {
-  const source = (await readFile(file, 'utf8'))
-    .replaceAll("'./training'", "'./training.js'")
-    .replaceAll('../lib/training', '../lib/training.js')
-    .replaceAll('../lib/operations', '../lib/operations.js')
-    .replaceAll('../lib/sync-error', '../lib/sync-error.js')
-    .replaceAll('../lib/sync-schedule', '../lib/sync-schedule.js')
-    .replaceAll('../lib/exercise-art', '../lib/exercise-art.js')
-    .replaceAll('../lib/workout-sets', '../lib/workout-sets.js');
+  const source = rewrite(await readFile(file, 'utf8'));
   await writeFile(
     join(dir, file.replace(/\.ts$/, '.js')),
     ts.transpileModule(source, {
@@ -43,7 +46,10 @@ const result = spawnSync(
     join(dir, 'tests/operations.test.js'),
     join(dir, 'tests/offline.test.js'),
     join(dir, 'tests/workout-sets.test.js'),
+    join(dir, 'tests/hot-path-latency.test.js'),
     'tests/shell-assets.test.mjs',
+    'tests/shell-cache.test.mjs',
+    'tests/notebook-sql.test.mjs',
   ],
   { stdio: 'inherit' },
 );
