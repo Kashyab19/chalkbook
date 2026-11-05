@@ -35,6 +35,7 @@ import { currentExerciseAddSet } from '@/lib/workout-sets';
 import { cx } from '@/lib/boardui-cx';
 import { useDeviceDraft } from '@/hooks/use-device-draft';
 import { ExerciseArt } from './exercise-art';
+import { SwapPicker } from './swap-picker';
 export function BoardWorkout({
   session,
   sessions,
@@ -64,7 +65,6 @@ export function BoardWorkout({
     } | null>(null),
     [noteOpen, setNoteOpen] = useState(false),
     [swapOpen, setSwapOpen] = useState(false),
-    [swapName, setSwapName] = useState(''),
     [updateProgram, setUpdateProgram] = useState(false);
   const [until, setUntil] = useDeviceDraft<number>(`rest-${session.id}`, 0);
   const lock = useRef(false);
@@ -177,17 +177,16 @@ export function BoardWorkout({
     );
   const closeSwap = () => {
     setSwapOpen(false);
-    setSwapName('');
     setUpdateProgram(false);
   };
-  const swapExercise = () => {
-    const name = swapName.trim();
-    if (!currentExercise || nextJ < 0 || !name || name === currentExercise.name) {
+  const swapExercise = (name: string, id: string | null) => {
+    const nextName = name.trim();
+    if (!currentExercise || nextJ < 0 || !nextName || nextName === currentExercise.name) {
       closeSwap();
       return;
     }
-    const id = `custom-${crypto.randomUUID()}`;
-    const updated = swapExerciseInSession(session, nextJ, name, id);
+    const nextId = id ?? `custom-${crypto.randomUUID()}`;
+    const updated = swapExerciseInSession(session, nextJ, nextName, nextId);
     const actions: Action[] = [{ type: 'restoreSession', session: updated }];
     if (updateProgram) {
       actions.push({
@@ -198,8 +197,8 @@ export function BoardWorkout({
           currentExercise.id,
           nextJ,
           {
-            id,
-            name,
+            id: nextId,
+            name: nextName,
             sets: currentExercise.sets,
             min: currentExercise.min,
             max: currentExercise.max,
@@ -252,7 +251,6 @@ export function BoardWorkout({
               aria-label={`Swap ${currentExercise.name}`}
               disabled={busy || saving || finished}
               onClick={() => {
-                setSwapName(currentExercise.name);
                 setUpdateProgram(false);
                 setSwapOpen(true);
               }}
@@ -280,29 +278,15 @@ export function BoardWorkout({
             ) : null}
           </div>
           {swapOpen ? (
-            <form className="focus-swap-form" onSubmit={(event) => { event.preventDefault(); swapExercise(); }}>
-              <Input
-                autoFocus
-                className="focus-swap-name"
-                aria-label="Replacement exercise name"
-                value={swapName}
-                maxLength={100}
-                onChange={(value) => setSwapName(value)}
-              />
-              <label className="focus-swap-scope">
-                <input
-                  type="checkbox"
-                  checked={updateProgram}
-                  onChange={(event) => setUpdateProgram(event.target.checked)}
-                />
-                <span>
-                  Also update the program
-                  <small>Off keeps this change on this workout</small>
-                </span>
-              </label>
-              <button className="focus-swap-cancel" type="button" onClick={closeSwap}>Cancel</button>
-              <button className="focus-swap-submit" type="submit" disabled={!swapName.trim() || busy || saving}>Use</button>
-            </form>
+            <SwapPicker
+              currentName={currentExercise.name}
+              exercises={program.flatMap((day) => day.exercises)}
+              updateProgram={updateProgram}
+              busy={busy || saving}
+              onUpdateProgram={setUpdateProgram}
+              onSwap={({ name, id }) => swapExercise(name, id)}
+              onClose={closeSwap}
+            />
           ) : previousSet?.completed && previousSet.weightKg != null && previousSet.reps != null ? (
             <button
               type="button"
