@@ -18,6 +18,7 @@ for (const file of [
   'lib/sync-schedule.ts',
   'lib/exercise-art.ts',
   'lib/workout-sets.ts',
+  'lib/skip-exercise.ts',
   'lib/exercise-catalog.ts',
   'lib/notebook-round-trips.ts',
   'lib/login-round-trips.ts',
@@ -27,6 +28,7 @@ for (const file of [
   'tests/operations.test.ts',
   'tests/offline.test.ts',
   'tests/workout-sets.test.ts',
+  'tests/skip-exercise.test.ts',
   'tests/exercise-catalog.test.ts',
   'tests/hot-path-latency.test.ts',
 ]) {
@@ -48,6 +50,7 @@ const result = spawnSync(
     join(dir, 'tests/operations.test.js'),
     join(dir, 'tests/offline.test.js'),
     join(dir, 'tests/workout-sets.test.js'),
+    join(dir, 'tests/skip-exercise.test.js'),
     join(dir, 'tests/exercise-catalog.test.js'),
     join(dir, 'tests/hot-path-latency.test.js'),
     'tests/shell-assets.test.mjs',

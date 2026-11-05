@@ -1355,7 +1355,19 @@ html.dark .sign-in-submit {
   border-top: 1px solid #252826;
 }
 .focus-up-next > p { margin: 0 0 10px; color: #858b87; font-size: 16px; }
-.focus-up-next > div { display: flex; align-items: center; gap: 14px; }
+.focus-up-next > div,
+.focus-up-next-jump { display: flex; align-items: center; gap: 14px; }
+.focus-up-next-jump {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+.focus-up-next-jump:disabled { opacity: 0.55; }
+.focus-up-next-jump .focus-skip { min-height: 32px; padding: 0 10px; font-size: 12px; }
+.focus-up-next-jump strong { min-width: 0; overflow-wrap: anywhere; }
 .exercise-art.focus-next-art { width: 78px; height: 78px; border-radius: 18px; background: transparent; }
 .exercise-art.focus-next-art img { object-fit: contain; transform: scale(1.15); }
 .focus-up-next strong { flex: 1; font-size: 18px; }
@@ -1378,6 +1390,39 @@ html.dark .sign-in-submit {
 }
 .focus-add-set svg { width: 16px; height: 16px; color: var(--focus-accent); }
 .focus-add-set:active { transform: scale(0.97); }
+.focus-skip {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 12px;
+  border: 1px solid #343735;
+  border-radius: 999px;
+  background: #171918;
+  color: #d7dbd8;
+  font-size: 13px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+.focus-skip svg { width: 16px; height: 16px; color: #c8ccc9; }
+.focus-skip:active { transform: scale(0.97); }
+.focus-skip:disabled { opacity: 0.45; }
+.focus-skip-to { margin: 0 0 8px; }
+.focus-set-row.is-skipped {
+  grid-template-columns: 24px 1fr;
+  min-height: 42px;
+  color: #9aa09b;
+}
+.focus-set-row.is-skipped p {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.focus-exercise-list article.is-skipped { border-color: #3a3d3b; }
+.focus-exercise-heading b.is-skipped { color: #9aa09b; }
 .focus-quick-actions button { color: #c7cbc8; }
 .focus-workout .set-note { border-color: #2a2d2b; }
 .focus-workout .set-note textarea { background: #171918; border-color: #333634; color: #fff; }

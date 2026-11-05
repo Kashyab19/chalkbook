@@ -142,7 +142,8 @@ export async function writeOperationWith(
     action.type === 'addSet' ||
     action.type === 'removeSet' ||
     action.type === 'finish' ||
-    action.type === 'interactions'
+    action.type === 'interactions' ||
+    action.type === 'skipExercises'
   ) {
     // The receipt and the session read share one round trip. Applying the edit
     // still happens in TypeScript, so the update is a second round trip.

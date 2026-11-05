@@ -1,6 +1,7 @@
 import { getDb } from '@/db';
 import { defaultProgram, type Data } from '@/lib/training';
 import { validateAction, type Operation } from '@/lib/operations';
+import { skipExerciseJsonPaths } from '@/lib/skip-exercise';
 import { authorize } from '@/lib/server-auth';
 
 const response = (data: unknown, status = 200) =>
@@ -156,6 +157,22 @@ export async function POST(request: Request) {
             .bind(a.id, op.id),
         );
         break;
+      case 'skipExercises': {
+        const patch = skipExerciseJsonPaths(a.exercises, a.skipped);
+        statements.push(
+          db
+            .prepare(
+              `UPDATE sessions SET data=json_set(data, ${patch.map(() => '?, json(?)').join(', ')}) WHERE id=? AND ${patch.map(() => "json_type(data, ?)='object'").join(' AND ')} AND ${unseen}`,
+            )
+            .bind(
+              ...patch.flatMap((item) => [item.path, item.json]),
+              a.id,
+              ...patch.map((item) => item.objectPath),
+              op.id,
+            ),
+        );
+        break;
+      }
     }
     statements.push(
       db
