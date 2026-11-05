@@ -1864,15 +1864,37 @@ html[data-accent='coral'] { --app-accent-300: #ffb3a8; --app-accent-400: #ff9586
 .focus-exercise-title h2 { margin: 0; }
 .focus-swap-trigger { display: inline-flex; min-height: 32px; align-items: center; gap: 5px; padding: 6px 9px; border: 1px solid #343735; border-radius: 999px; background: #171918; color: #c8ccc9; font-size: 11px; font-weight: 750; }
 .focus-swap-trigger svg { width: 14px; height: 14px; }
-.focus-swap-form { display: grid; width: min(100%, 500px); grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "name cancel submit" "scope scope scope"; align-items: center; gap: 7px; margin: 9px auto 11px; padding: 6px; border: 1px solid #343735; border-radius: 15px; background: #151716; }
-.focus-swap-name { grid-area: name; min-width: 0; }
-.focus-swap-form input { min-width: 0; min-height: 40px; }
-.focus-swap-form button { min-height: 40px; padding: 0 11px; border-radius: 10px; color: #bfc4c0; font-size: 12px; font-weight: 750; }
-.focus-swap-cancel { grid-area: cancel; }
-.focus-swap-submit { grid-area: submit; background: var(--app-accent-500); color: #0b0d0b; }
-.focus-swap-scope { grid-area: scope; display: flex; align-items: flex-start; gap: 8px; padding: 1px 6px 3px; color: #9aa09b; font-size: 12px; font-weight: 650; text-align: left; }
-.focus-swap-scope input { width: 16px; height: 16px; min-height: 16px; margin: 1px 0 0; accent-color: var(--app-accent-500); }
+.focus-swap-form { display: flex; flex-direction: column; width: min(100%, 520px); gap: 8px; margin: 10px auto 12px; padding: 8px; border: 1px solid #343735; border-radius: 16px; background: #151716; text-align: left; }
+.focus-swap-search { width: 100%; }
+.focus-swap-form input { min-width: 0; min-height: 48px; font-size: 16px; }
+.focus-swap-heading { margin: 2px 6px 0; color: #8f9590; font-size: 11px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.focus-swap-list { max-height: min(46vh, 360px); margin: 0; padding: 0; overflow: auto; list-style: none; overscroll-behavior: contain; }
+.focus-swap-option { display: flex; width: 100%; min-height: 52px; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 12px; color: #f3f4f1; font-size: 16px; font-weight: 700; text-align: left; }
+.focus-swap-option span { display: grid; min-width: 0; }
+.focus-swap-option small { color: #8f9590; font-size: 12px; font-weight: 650; }
+.focus-swap-option:hover, .focus-swap-option:focus-visible { background: #222523; }
+.exercise-art.focus-swap-art { width: 40px; height: 40px; flex: 0 0 auto; border-radius: 10px; }
+.focus-swap-empty { padding: 12px 8px; color: #8f9590; font-size: 14px; }
+.focus-swap-custom { min-height: 52px; border: 1px dashed #3c403c; border-radius: 12px; color: var(--app-accent-400); font-size: 16px; font-weight: 750; }
+.focus-swap-cancel { min-height: 44px; border-radius: 12px; color: #bfc4c0; font-size: 14px; font-weight: 750; }
+.focus-swap-scope { display: flex; min-height: 44px; align-items: center; gap: 10px; padding: 2px 6px; color: #9aa09b; font-size: 13px; font-weight: 650; text-align: left; }
+.focus-swap-scope input { width: 22px; height: 22px; min-height: 22px; margin: 0; accent-color: var(--app-accent-500); }
 .focus-swap-scope small { display: block; margin-top: 1px; color: #6f756f; font-size: 11px; font-weight: 600; }
+@media (max-width: 699px) {
+  .focus-swap-form {
+    position: fixed;
+    z-index: 60;
+    right: 12px;
+    bottom: calc(max(8px, env(safe-area-inset-bottom)) + 76px);
+    left: 12px;
+    width: auto;
+    max-height: calc(100dvh - max(8px, env(safe-area-inset-bottom)) - 96px);
+    margin: 0;
+    overflow: auto;
+    box-shadow: 0 18px 50px rgb(0 0 0 / .45);
+  }
+  .focus-swap-list { max-height: none; }
+}
 .focus-previous-set { display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 1px solid #353835; color: #b8bdb9; }
 .focus-previous-set span { margin-left: 5px; color: var(--app-accent-400); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
 
