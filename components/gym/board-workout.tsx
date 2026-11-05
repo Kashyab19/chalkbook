@@ -16,6 +16,7 @@ import {
   RiMore2Line,
   RiPencilLine,
   RiPauseLine,
+  RiSkipForwardLine,
   RiTimeLine,
 } from '@remixicon/react';
 import {
@@ -31,6 +32,17 @@ import {
   target,
 } from '@/lib/training';
 import { type Action, validSet } from '@/lib/operations';
+import {
+  canFinishWorkout,
+  currentExerciseSkip,
+  exerciseProgressLabel,
+  exercisesToSkip,
+  isExercisePending,
+  nextPendingExerciseIndex,
+  pendingExerciseIndex,
+  skipCurrentExerciseIndexes,
+  skipToExerciseChip,
+} from '@/lib/skip-exercise';
 import { currentExerciseAddSet } from '@/lib/workout-sets';
 import { cx } from '@/lib/boardui-cx';
 import { useDeviceDraft } from '@/hooks/use-device-draft';
@@ -65,7 +77,8 @@ export function BoardWorkout({
     [noteOpen, setNoteOpen] = useState(false),
     [swapOpen, setSwapOpen] = useState(false),
     [swapName, setSwapName] = useState(''),
-    [updateProgram, setUpdateProgram] = useState(false);
+    [updateProgram, setUpdateProgram] = useState(false),
+    [skipUndo, setSkipUndo] = useState<number[] | null>(null);
   const [until, setUntil] = useDeviceDraft<number>(`rest-${session.id}`, 0);
   const lock = useRef(false);
   const interactions = useRef<InteractionMetrics>(
@@ -107,9 +120,7 @@ export function BoardWorkout({
       0,
     ),
     total = session.exercises.reduce((n, e) => n + e.entries.length, 0);
-  const nextJ = session.exercises.findIndex((e) =>
-      e.entries.some((s) => !s.completed),
-    ),
+  const nextJ = pendingExerciseIndex(session.exercises),
     nextI =
       nextJ < 0
         ? -1
@@ -124,16 +135,26 @@ export function BoardWorkout({
         exerciseName: currentExercise.name,
       })
     : null;
+  const skip = currentExercise
+    ? currentExerciseSkip({
+        finished,
+        exerciseName: currentExercise.name,
+        pending: isExercisePending(currentExercise),
+      })
+    : null;
+  const finishable = canFinishWorkout({
+    finished,
+    completedSets: done,
+    pendingExercise: nextJ >= 0,
+  });
   const currentPrevious = currentExercise
     ? previous(sessions, currentExercise.id, session.date)
     : null;
   const previousSet = currentExercise && nextI > 0
     ? currentExercise.entries[nextI - 1]
     : null;
-  const nextExercise = session.exercises.find(
-    (exercise, index) =>
-      index > nextJ && exercise.entries.some((entry) => !entry.completed),
-  );
+  const upcomingIndex = nextPendingExerciseIndex(session.exercises, nextJ);
+  const nextExercise = upcomingIndex < 0 ? null : session.exercises[upcomingIndex];
   const mark = (j: number, i: number) => {
     const value = session.exercises[j].entries[i];
     void run(
@@ -173,6 +194,7 @@ export function BoardWorkout({
       () => {
         setUntil(0);
         setUndo(null);
+        setSkipUndo(null);
       },
     );
   const closeSwap = () => {
@@ -209,6 +231,33 @@ export function BoardWorkout({
     }
     void run(actions, closeSwap);
   };
+  const skipIndexes = (indexes: number[]) => {
+    if (!indexes.length || finished) return;
+    void run(
+      { type: 'skipExercises', id: session.id, exercises: indexes, skipped: true },
+      () => {
+        setSkipUndo(indexes);
+        closeSwap();
+        if (noteTarget && indexes.includes(noteTarget.exercise)) {
+          setNoteTarget(null);
+          setNoteOpen(false);
+        }
+      },
+    );
+  };
+  const unskipIndexes = (indexes: number[]) => {
+    if (!indexes.length || finished) return;
+    void run(
+      { type: 'skipExercises', id: session.id, exercises: indexes, skipped: false },
+      () => {
+        setSkipUndo((current) => {
+          if (!current) return null;
+          const remaining = current.filter((index) => !indexes.includes(index));
+          return remaining.length ? remaining : null;
+        });
+      },
+    );
+  };
   return (
     <div
       className="focus-workout"
@@ -236,7 +285,7 @@ export function BoardWorkout({
           leadingIcon={RiMore2Line}
           className="focus-menu"
           aria-label={finished ? 'Resume workout' : 'Finish workout'}
-          disabled={busy || saving || (!finished && !done)}
+          disabled={busy || saving || !finishable}
           onClick={finish}
         />
       </header>
@@ -276,6 +325,17 @@ export function BoardWorkout({
                 })}
               >
                 <RiAddLine aria-hidden /> {addSet.label}
+              </button>
+            ) : null}
+            {skip ? (
+              <button
+                type="button"
+                className="focus-skip"
+                aria-label={skip.accessibleName}
+                disabled={busy || saving}
+                onClick={() => skipIndexes(skipCurrentExerciseIndexes(session.exercises))}
+              >
+                <RiSkipForwardLine aria-hidden /> {skip.label}
               </button>
             ) : null}
           </div>
@@ -332,6 +392,7 @@ export function BoardWorkout({
 
           <div className="focus-fields">
             <FocusField
+              key={`${session.id}-${nextJ}-${nextI}-weight`}
               label="Weight"
               unit={unit}
               value={next.weightKg === null ? null : display(next.weightKg, unit)}
@@ -344,6 +405,7 @@ export function BoardWorkout({
               })}
             />
             <FocusField
+              key={`${session.id}-${nextJ}-${nextI}-reps`}
               label="Reps"
               unit="reps"
               value={next.reps}
@@ -372,9 +434,15 @@ export function BoardWorkout({
       ) : (
         <div className="focus-complete">
           <RiCheckLine aria-hidden />
-          <h2>Workout complete</h2>
-          <p>{done} sets logged. Strong work.</p>
-          <Button onClick={finish}>{finished ? 'Resume workout' : 'Finish workout'}</Button>
+          <h2>{done ? 'Workout complete' : 'Workout skipped'}</h2>
+          <p>
+            {done
+              ? `${done} ${done === 1 ? 'set' : 'sets'} logged. Strong work.`
+              : 'No sets were logged. Undo a skip or finish here.'}
+          </p>
+          <Button onClick={finish} disabled={busy || saving}>
+            {finished ? 'Resume workout' : 'Finish workout'}
+          </Button>
         </div>
       )}
 
@@ -383,15 +451,21 @@ export function BoardWorkout({
       {nextExercise ? (
         <section className="focus-up-next" aria-label="Up next">
           <p>Up next</p>
-          <div>
+          <button
+            type="button"
+            className="focus-up-next-jump"
+            aria-label={`Skip to ${nextExercise.name}`}
+            disabled={busy || saving || finished}
+            onClick={() => skipIndexes(exercisesToSkip(session.exercises, upcomingIndex))}
+          >
             <ExerciseArt name={nextExercise.name} className="focus-next-art" />
             <strong>{nextExercise.name}</strong>
-            <RiArrowRightLine aria-hidden />
-          </div>
+            <span className="focus-skip">Skip to here</span>
+          </button>
         </section>
       ) : null}
 
-      {undo || noteTarget || (currentExercise && next && !finished) ? (
+      {undo || skipUndo || noteTarget || (currentExercise && next && !finished) ? (
         <div className="focus-quick-actions">
           {undo ? (
             <Button variant="ghost" disabled={busy || saving} onClick={() =>
@@ -399,6 +473,11 @@ export function BoardWorkout({
                 setUndo(null); setUntil(0);
               })
             }>Undo last set</Button>
+          ) : null}
+          {skipUndo && !finished ? (
+            <Button variant="ghost" disabled={busy || saving} onClick={() => unskipIndexes(skipUndo)}>
+              Undo skip
+            </Button>
           ) : null}
           {noteTarget || (currentExercise && next && !finished) ? (
             <Button variant="ghost" leadingIcon={RiChat1Line} disabled={busy || saving}
@@ -432,14 +511,37 @@ export function BoardWorkout({
       <details className="focus-full-workout">
         <summary>Full workout <span>{done}/{total} sets</span></summary>
         <div className="focus-exercise-list">
-          {session.exercises.map((exercise, j) => (
-            <article key={exercise.id}>
+          {session.exercises.map((exercise, j) => {
+            const skipTo = skipToExerciseChip({
+              finished,
+              exerciseName: exercise.name,
+              available: exercisesToSkip(session.exercises, j).length > 0,
+            });
+            return (
+            <article key={exercise.id} className={cx(exercise.skipped && 'is-skipped')}>
               <div className="focus-exercise-heading">
                 <ExerciseArt name={exercise.name} className="focus-list-art" />
                 <div><strong>{exercise.name}</strong><span>{exercise.min}–{exercise.max} reps</span></div>
-                <b>{exercise.entries.filter((entry) => entry.completed).length}/{exercise.entries.length}</b>
+                <b className={cx(exercise.skipped && 'is-skipped')}>{exerciseProgressLabel(exercise)}</b>
               </div>
+              {skipTo ? (
+                <button
+                  type="button"
+                  className="focus-skip focus-skip-to"
+                  aria-label={skipTo.accessibleName}
+                  disabled={busy || saving}
+                  onClick={() => skipIndexes(exercisesToSkip(session.exercises, j))}
+                >
+                  {skipTo.label}
+                </button>
+              ) : null}
               {exercise.entries.map((entry, i) => (
+                exercise.skipped && !entry.completed ? (
+                  <div className="focus-set-row is-skipped" key={i}>
+                    <span>{i + 1}</span>
+                    <p>Skipped</p>
+                  </div>
+                ) : (
                 <div className={cx('focus-set-row', entry.completed && 'is-complete')} key={i}>
                   <span>{i + 1}</span>
                   <SetField draftKey={`${session.id}-${j}-${i}-weight-${unit}`} label={`${exercise.name} set ${i + 1} weight`}
@@ -453,15 +555,28 @@ export function BoardWorkout({
                     disabled={finished || busy || saving || (!entry.completed && !validSet({ ...entry, completed: true }))}
                     onClick={() => mark(j, i)} />
                 </div>
+                )
               ))}
-              {!finished ? <Button variant="ghost" leadingIcon={RiAddLine} disabled={busy || saving || exercise.entries.length >= 30}
+              {!finished && !exercise.skipped ? <Button variant="ghost" leadingIcon={RiAddLine} disabled={busy || saving || exercise.entries.length >= 30}
                 onClick={() => void run({ type: 'addSet', id: session.id, exercise: j, set: exercise.entries.length,
                   value: { weightKg: exercise.entries.at(-1)?.weightKg ?? null, reps: exercise.entries.at(-1)?.reps ?? null, completed: false } })}>Add set</Button> : null}
+              {exercise.skipped && !finished ? (
+                <button
+                  type="button"
+                  className="focus-skip"
+                  aria-label={`Undo skip for ${exercise.name}`}
+                  disabled={busy || saving}
+                  onClick={() => unskipIndexes([j])}
+                >
+                  Undo skip
+                </button>
+              ) : null}
               {previous(sessions, exercise.id, session.date) && target(exercise, previous(sessions, exercise.id, session.date)!.exercise.entries).increase ? (
                 <p className="focus-progression">Previous sets reached the rep target. Increase weight when ready.</p>
               ) : null}
             </article>
-          ))}
+            );
+          })}
         </div>
       </details>
     </div>

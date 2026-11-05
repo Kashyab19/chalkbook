@@ -17,7 +17,8 @@ export type Action =
   | { type: 'body'; date: string; weightKg: number }
   | { type: 'deleteBody'; date: string }
   | { type: 'deleteSession'; id: string }
-  | { type: 'restoreSession'; session: Session };
+  | { type: 'restoreSession'; session: Session }
+  | { type: 'skipExercises'; id: string; exercises: number[]; skipped: boolean };
 export type Operation = { id: string; action: Action };
 
 export function applyAction(data: Data, action: Action): Data {
@@ -122,6 +123,20 @@ export function applyAction(data: Data, action: Action): Data {
         ...data,
         sessions: data.sessions.filter((s) => s.id !== action.id),
       };
+    case 'skipExercises':
+      return {
+        ...data,
+        sessions: data.sessions.map((session) => {
+          if (session.id !== action.id) return session;
+          const selected = new Set(action.exercises);
+          return {
+            ...session,
+            exercises: session.exercises.map((exercise, index) =>
+              selected.has(index) ? { ...exercise, skipped: action.skipped } : exercise,
+            ),
+          };
+        }),
+      };
   }
 }
 
@@ -204,6 +219,7 @@ export function validSession(s: unknown): s is Session {
       (e) =>
         validExercise(e) &&
         object(e) &&
+        (e.skipped === undefined || typeof e.skipped === 'boolean') &&
         Array.isArray(e.entries) &&
         e.entries.length >= (e.sets as number) &&
         e.entries.length <= 30 &&
@@ -256,6 +272,16 @@ export function validateAction(v: unknown): asserts v is Action {
         return validDate(v.date);
       case 'deleteSession':
         return text(v.id, 200);
+      case 'skipExercises':
+        return (
+          text(v.id, 200) &&
+          Array.isArray(v.exercises) &&
+          v.exercises.length > 0 &&
+          v.exercises.length <= 30 &&
+          v.exercises.every((index: unknown) => num(index, 0, 29, true)) &&
+          new Set(v.exercises).size === v.exercises.length &&
+          typeof v.skipped === 'boolean'
+        );
       default:
         return false;
     }

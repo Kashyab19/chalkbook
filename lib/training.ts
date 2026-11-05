@@ -23,7 +23,11 @@ export type Day = {
   name: string;
   exercises: Exercise[];
 };
-export type LoggedExercise = Exercise & { entries: SetLog[] };
+export type LoggedExercise = Exercise & {
+  entries: SetLog[];
+  /** Passed over on purpose. Incomplete sets are not missing logs. */
+  skipped?: boolean;
+};
 export type Session = {
   id: string;
   date: string;

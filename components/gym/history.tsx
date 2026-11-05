@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { CalendarDays, ArrowRight } from 'lucide-react';
 import { Picker, Chart, performance } from './controls';
+import { exerciseHistoryLabel } from '@/lib/skip-exercise';
 import { dateLabel, display, type Data, type Session } from '@/lib/training';
 import { ExerciseArt } from './exercise-art';
 export function History({
@@ -260,7 +261,7 @@ export function History({
                     onClick={() => setExercise(e.id)}
                   >
                     <span>{e.name}</span>
-                    <strong>{performance(e.entries, unit)}</strong>
+                    <strong>{exerciseHistoryLabel(e, performance(e.entries, unit))}</strong>
                   </button>
                 ))}
               <div className="row-between">
