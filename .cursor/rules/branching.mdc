@@ -1,0 +1,18 @@
+---
+description: Git branching strategy for chalkbook. Always apply when creating or renaming branches.
+alwaysApply: true
+---
+
+# Branching strategy
+
+Never create or push branches whose names start with `cursor/`.
+
+Every branch name must start with one of these prefixes:
+
+- `feature/` — new capability or intentional product change
+- `bug/` — fix for incorrect or broken behavior
+- `experiment/` — exploratory or throwaway work that may not ship
+
+Use lowercase kebab-case after the prefix (for example `feature/offline-retry`, `bug/session-cookie`, `experiment/paper-redesign`).
+
+Do not use bare names, personal prefixes, or agent-default prefixes such as `cursor/`.
