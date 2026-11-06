@@ -181,6 +181,21 @@ export function BoardWorkout({
       },
     );
   };
+  const markFailure = (j: number, i: number) => {
+    const value = session.exercises[j].entries[i];
+    void run(
+      {
+        type: 'set', id: session.id, exercise: j, set: i,
+        value: { ...value, weightKg: null, reps: null, completed: true, failed: true },
+      },
+      () => {
+        setUndo({ exercise: j, set: i, value });
+        setNoteTarget({ exercise: j, set: i });
+        setNoteOpen(false);
+        setUntil(Date.now() + restSeconds * 1000);
+      },
+    );
+  };
   const finish = () =>
     void run(
       [
@@ -410,6 +425,14 @@ export function BoardWorkout({
             onClick={() => mark(nextJ, nextI)}
           >
             <span>Log set</span><RiArrowRightLine aria-hidden />
+          </button>
+          <button
+            type="button"
+            className="focus-failure-button"
+            disabled={busy || saving || finished}
+            onClick={() => markFailure(nextJ, nextI)}
+          >
+            Log as failure
           </button>
           {!validSet({ ...next, completed: true }) ? (
             <p className="focus-help">Enter weight and reps to log this set.</p>
@@ -720,13 +743,20 @@ function RestTimer({
   setUntil: (n: number) => void;
 }) {
   const [now, setNow] = useState(Date.now);
+  const announced = useRef(false);
   useEffect(() => {
     setNow(Date.now());
+    announced.current = false;
     if (!until) return;
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, [until]);
   const seconds = Math.max(0, Math.ceil((until - now) / 1000));
+  useEffect(() => {
+    if (seconds !== 0 || announced.current) return;
+    announced.current = true;
+    if ('vibrate' in navigator) navigator.vibrate?.([120, 60, 120]);
+  }, [seconds]);
   if (!until) return null;
   return (
     <div className="focus-rest" role="timer" aria-live="polite">

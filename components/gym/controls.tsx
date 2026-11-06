@@ -91,13 +91,15 @@ export function Stepper({
 }
 export function performance(entries: SetLog[], unit: string) {
   const valid = entries.filter(
-    (x) => x.completed && x.weightKg !== null && x.reps !== null,
+    (x) => x.completed && !x.failed && x.weightKg !== null && x.reps !== null,
   );
-  if (!valid.length) return 'No completed sets yet';
+  const failures = entries.filter((x) => x.completed && x.failed).length;
+  if (!valid.length) return failures ? `${failures} failed` : 'No completed sets yet';
   if (valid.every((x) => Math.abs(x.weightKg! - valid[0].weightKg!) < 0.001))
     return `${display(valid[0].weightKg!, unit)} ${unit} × ${valid.map((x) => x.reps).join(' / ')}`;
   return valid
     .map((x) => `${display(x.weightKg!, unit)} ${unit} × ${x.reps}`)
+    .concat(failures ? [`${failures} failed`] : [])
     .join(' · ');
 }
 export function Chart({
