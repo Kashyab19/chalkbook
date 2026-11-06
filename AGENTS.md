@@ -15,6 +15,11 @@
 - Name every branch with `feature/`, `bug/`, or `experiment/`, then a lowercase kebab-case slug.
 - Examples: `feature/offline-retry`, `bug/session-cookie`, `experiment/paper-redesign`.
 
+## Pull requests
+
+- Keep every PR description concise and easy to understand.
+- State what changed and why in one or two short sentences; avoid fluff and process narration.
+
 ## Deployment
 
 - The production URL is `https://os.kashyab.xyz`.
