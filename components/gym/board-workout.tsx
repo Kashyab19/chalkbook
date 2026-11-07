@@ -43,6 +43,7 @@ import {
   skipCurrentExerciseIndexes,
   skipToExerciseChip,
 } from '@/lib/skip-exercise';
+import { playRestCompleteCue, primeRestCue, restTimerShouldCue } from '@/lib/rest-cue';
 import { currentExerciseAddSet } from '@/lib/workout-sets';
 import { cx } from '@/lib/boardui-cx';
 import { useDeviceDraft } from '@/hooks/use-device-draft';
@@ -156,6 +157,7 @@ export function BoardWorkout({
   const upcomingIndex = nextPendingExerciseIndex(session.exercises, nextJ);
   const nextExercise = upcomingIndex < 0 ? null : session.exercises[upcomingIndex];
   const mark = (j: number, i: number) => {
+    primeRestCue();
     const value = session.exercises[j].entries[i];
     void run(
       [
@@ -182,6 +184,7 @@ export function BoardWorkout({
     );
   };
   const markFailure = (j: number, i: number) => {
+    primeRestCue();
     const value = session.exercises[j].entries[i];
     void run(
       {
@@ -276,7 +279,11 @@ export function BoardWorkout({
     <div
       className="focus-workout"
       onPointerUpCapture={recordInteraction}
-      onKeyDownCapture={recordInteraction}
+      onClickCapture={() => primeRestCue()}
+      onKeyDownCapture={(event) => {
+        primeRestCue();
+        recordInteraction(event);
+      }}
     >
       <header className="focus-session-header">
         <div>
@@ -753,10 +760,10 @@ function RestTimer({
   }, [until]);
   const seconds = Math.max(0, Math.ceil((until - now) / 1000));
   useEffect(() => {
-    if (seconds !== 0 || announced.current) return;
+    if (!restTimerShouldCue({ until, seconds, alreadySignaled: announced.current })) return;
     announced.current = true;
-    if ('vibrate' in navigator) navigator.vibrate?.([120, 60, 120]);
-  }, [seconds]);
+    playRestCompleteCue();
+  }, [until, seconds]);
   if (!until) return null;
   return (
     <div className="focus-rest" role="timer" aria-live="polite">
