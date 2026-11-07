@@ -94,10 +94,6 @@ export function loadLocal() {
     },
   });
 }
-export async function recover() {
-  if (!deviceOwner() || !('caches' in globalThis)) return false;
-  return (await loadLocal()).recovered;
-}
 function database() {
   return (opening ??= new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(deviceOwner() ? `gym-notebook-${deviceOwner()}` : 'gym-notebook', 1);

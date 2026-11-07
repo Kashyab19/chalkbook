@@ -1,4 +1,4 @@
-import { dateKey } from './training';
+import { dateKey, factor } from './training';
 export type WeightEntry = { date: string; weight: number };
 
 export const DAY = 86400000;
@@ -12,7 +12,7 @@ export const dateLabel = (date: string | number) =>
     timeZone: 'UTC',
   });
 export const weightIn = (kg: number, unit: string) =>
-  kg * (unit === 'lb' ? 2.2046226218 : 1);
+  kg * (unit === 'lb' ? factor : 1);
 export function weightSeries(
   entries: WeightEntry[],
   days: number,
