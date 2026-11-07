@@ -25,12 +25,14 @@ for (const file of [
   'lib/startup-snapshot.ts',
   'lib/ordered-background.ts',
   'lib/sync-flush.ts',
+  'lib/rest-cue.ts',
   'tests/operations.test.ts',
   'tests/offline.test.ts',
   'tests/workout-sets.test.ts',
   'tests/skip-exercise.test.ts',
   'tests/exercise-catalog.test.ts',
   'tests/hot-path-latency.test.ts',
+  'tests/rest-cue.test.ts',
 ]) {
   const source = rewrite(await readFile(file, 'utf8'));
   await writeFile(
@@ -53,6 +55,7 @@ const result = spawnSync(
     join(dir, 'tests/skip-exercise.test.js'),
     join(dir, 'tests/exercise-catalog.test.js'),
     join(dir, 'tests/hot-path-latency.test.js'),
+    join(dir, 'tests/rest-cue.test.js'),
     'tests/shell-assets.test.mjs',
     'tests/shell-cache.test.mjs',
     'tests/notebook-sql.test.mjs',
