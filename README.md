@@ -41,6 +41,7 @@ Local pending operations remain visible until acknowledged. Server refreshes can
 5. Export the original Sites data while signed in. Run `node scripts/postgres-admin.mjs import <account-name> <backup-file>` into an empty target. Verify the complete program and all records before switching addresses. Existing Sites data is never deleted by this migration.
 6. Deploy the included Dockerfile. The server listens on Railway's `PORT`, and `/api/health` checks database readiness.
 7. Add `os.kashyab.xyz` to the Railway app service and apply its returned DNS records in the correct Cloudflare account. Verify HTTPS and authenticated API access before installing.
+8. Background rest alerts need a one-time Web Push setup. Generate keys with `npx web-push generate-vapid-keys --json` and set `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` (a `mailto:` address) on the app service. Do not commit them. Run `node scripts/postgres-admin.mjs migrate` again so the push tables exist. If the app role is not the table owner, grant it the same access it already has on the other `fitness` tables. Without these, rest still chimes while the app is open.
 
 The database, user provisioning, and migration must be finished before the health check can pass. Use a strong generated owner password. Authentication uses salted scrypt password hashes, opaque server-side sessions, HttpOnly cookies, strict same-site cookies, origin checks, and account login throttling.
 
