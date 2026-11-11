@@ -3,27 +3,38 @@
  *
  * iOS Safari, including an installed PWA, does not implement `navigator.vibrate`.
  * The checkbox-switch haptic only runs for a real tap, and since iOS 26.5 a
- * timer cannot trigger it. The alarm is therefore a generated WAV played on an
- * audio element: no network fetch, and the media channel stays audible when the
- * ringer switch is on silent. That element has to be started during a user
- * gesture (logging a set). Web Audio is only the fallback if that element is
- * blocked. The cue leaves `audioSession.type` alone: `playback` would interrupt
- * the user's music and might not hand it back, while a media element already
- * stays audible with the hardware silent switch on.
+ * timer cannot trigger it. The foreground alarm is a generated sine chime played
+ * on an audio element: no network fetch, and the media channel stays audible
+ * when the ringer switch is on silent. That element has to be started during a
+ * user gesture (logging a set). Web Audio is only the fallback if that element
+ * is blocked. The cue leaves `audioSession.type` alone: `playback` would
+ * interrupt the user's music and might not hand it back, while a media element
+ * already stays audible with the hardware silent switch on.
+ *
+ * This file is the foreground cue only. A locked or backgrounded iOS PWA
+ * suspends the timer and this audio, so the background alert is a Web Push
+ * scheduled with the server. See `lib/rest-alarm.ts`.
  */
 
 export const REST_CUE_SAMPLE_RATE = 44100;
 
-/** Three pulses, the last one longer, so a phone on a bench is hard to miss. */
-export const REST_COMPLETE_VIBRATION = [220, 90, 220, 90, 380] as const;
+/**
+ * Three short taps. The Vibration API has no intensity control, so a shorter
+ * pattern is what makes this feel softer than a long buzz. iOS still ignores it.
+ */
+export const REST_COMPLETE_VIBRATION = [50, 80, 50, 80, 90] as const;
 
+/** A rising C-E-G chime. Sine tones stay audible without the buzz of a square wave. */
 const REST_COMPLETE_BEEPS = [
-  { offsetSec: 0, durationSec: 0.16, hz: 880 },
-  { offsetSec: 0.26, durationSec: 0.16, hz: 880 },
-  { offsetSec: 0.52, durationSec: 0.34, hz: 1174.66 },
+  { offsetSec: 0, durationSec: 0.18, hz: 523.25 },
+  { offsetSec: 0.32, durationSec: 0.18, hz: 659.25 },
+  { offsetSec: 0.64, durationSec: 0.26, hz: 783.99 },
 ] as const;
 
-const TONE_GAIN = 0.85;
+/** Half-scale sine is firm on a phone speaker. The old square wave at 0.85 was harsh. */
+export const REST_CUE_GAIN = 0.6;
+
+const TONE_GAIN = REST_CUE_GAIN;
 
 export function restTimerShouldCue(input: {
   until: number;
@@ -39,7 +50,7 @@ export function renderRestCompletePcm(): Int16Array {
   const total = Math.ceil((last.offsetSec + last.durationSec) * REST_CUE_SAMPLE_RATE);
   const pcm = new Int16Array(total);
   const amplitude = Math.round(TONE_GAIN * 32767);
-  const fadeSamples = Math.floor(0.008 * REST_CUE_SAMPLE_RATE);
+  const fadeSamples = Math.floor(0.018 * REST_CUE_SAMPLE_RATE);
   for (const beep of REST_COMPLETE_BEEPS) {
     const start = Math.floor(beep.offsetSec * REST_CUE_SAMPLE_RATE);
     const end = Math.min(
@@ -53,8 +64,8 @@ export function renderRestCompletePcm(): Int16Array {
       let envelope = 1;
       if (into < fadeSamples) envelope = into / fadeSamples;
       else if (remaining < fadeSamples) envelope = remaining / fadeSamples;
-      const square = (into / period) % 1 < 0.5 ? 1 : -1;
-      pcm[index] = Math.round(square * amplitude * envelope);
+      const sine = Math.sin((2 * Math.PI * into) / period);
+      pcm[index] = Math.round(sine * amplitude * envelope);
     }
   }
   return pcm;
@@ -148,7 +159,7 @@ export function scheduleRestCompleteTone(ctx: RestCueWebAudio): void {
   for (const beep of REST_COMPLETE_BEEPS) {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = 'square';
+    osc.type = 'sine';
     osc.frequency.value = beep.hz;
     const at = origin + beep.offsetSec;
     const end = at + beep.durationSec;

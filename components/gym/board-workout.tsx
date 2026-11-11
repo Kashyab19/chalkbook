@@ -43,7 +43,15 @@ import {
   skipCurrentExerciseIndexes,
   skipToExerciseChip,
 } from '@/lib/skip-exercise';
-import { playRestCompleteCue, primeRestCue, restTimerShouldCue } from '@/lib/rest-cue';
+import { restEndAction } from '@/lib/rest-alarm';
+import {
+  armRestPushFromGesture,
+  cancelRestAlarm,
+  holdRestAlarm,
+  restAlarmIsArmed,
+  syncRestAlarm,
+} from '@/lib/rest-push';
+import { playRestCompleteCue, primeRestCue } from '@/lib/rest-cue';
 import { currentExerciseAddSet } from '@/lib/workout-sets';
 import { cx } from '@/lib/boardui-cx';
 import { useDeviceDraft } from '@/hooks/use-device-draft';
@@ -81,6 +89,10 @@ export function BoardWorkout({
     [updateProgram, setUpdateProgram] = useState(false),
     [skipUndo, setSkipUndo] = useState<number[] | null>(null);
   const [until, setUntil] = useDeviceDraft<number>(`rest-${session.id}`, 0);
+  const setRestUntil = (next: number) => {
+    setUntil(next);
+    if (next <= 0) void cancelRestAlarm();
+  };
   const lock = useRef(false);
   const interactions = useRef<InteractionMetrics>(
     session.interactions ?? { clicks: 0, touches: 0, keyboardEnters: 0 },
@@ -158,6 +170,7 @@ export function BoardWorkout({
   const nextExercise = upcomingIndex < 0 ? null : session.exercises[upcomingIndex];
   const mark = (j: number, i: number) => {
     primeRestCue();
+    armRestPushFromGesture();
     const value = session.exercises[j].entries[i];
     void run(
       [
@@ -175,16 +188,17 @@ export function BoardWorkout({
           setUndo({ exercise: j, set: i, value });
           setNoteTarget({ exercise: j, set: i });
           setNoteOpen(false);
-          setUntil(Date.now() + restSeconds * 1000);
+          setRestUntil(Date.now() + restSeconds * 1000);
         } else {
           setUndo(null);
-          setUntil(0);
+          setRestUntil(0);
         }
       },
     );
   };
   const markFailure = (j: number, i: number) => {
     primeRestCue();
+    armRestPushFromGesture();
     const value = session.exercises[j].entries[i];
     void run(
       {
@@ -195,7 +209,7 @@ export function BoardWorkout({
         setUndo({ exercise: j, set: i, value });
         setNoteTarget({ exercise: j, set: i });
         setNoteOpen(false);
-        setUntil(Date.now() + restSeconds * 1000);
+        setRestUntil(Date.now() + restSeconds * 1000);
       },
     );
   };
@@ -210,7 +224,7 @@ export function BoardWorkout({
         interactionAction(),
       ],
       () => {
-        setUntil(0);
+        setRestUntil(0);
         setUndo(null);
         setSkipUndo(null);
       },
@@ -460,7 +474,7 @@ export function BoardWorkout({
         </div>
       )}
 
-      {until ? <RestTimer until={until} setUntil={setUntil} /> : null}
+      {until ? <RestTimer key={until} until={until} setUntil={setRestUntil} /> : null}
 
       {nextExercise ? (
         <section className="focus-up-next" aria-label="Up next">
@@ -484,7 +498,7 @@ export function BoardWorkout({
           {undo ? (
             <Button variant="ghost" disabled={busy || saving} onClick={() =>
               void run({ type: 'set', id: session.id, ...undo }, () => {
-                setUndo(null); setUntil(0);
+                setUndo(null); setRestUntil(0);
               })
             }>Undo last set</Button>
           ) : null}
@@ -751,19 +765,44 @@ function RestTimer({
 }) {
   const [now, setNow] = useState(Date.now);
   const announced = useRef(false);
+  const leftForeground = useRef(false);
   useEffect(() => {
-    setNow(Date.now());
-    announced.current = false;
-    if (!until) return;
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
+  }, []);
+  useEffect(() => {
+    if (until <= Date.now()) return;
+    void syncRestAlarm(until, document.visibilityState === 'visible');
+    const onVisibility = () => {
+      const visible = document.visibilityState === 'visible';
+      if (!visible) leftForeground.current = true;
+      else if (Date.now() < until) leftForeground.current = false;
+      setNow(Date.now());
+      void holdRestAlarm(visible);
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
   }, [until]);
   const seconds = Math.max(0, Math.ceil((until - now) / 1000));
   useEffect(() => {
-    if (!restTimerShouldCue({ until, seconds, alreadySignaled: announced.current })) return;
+    const action = restEndAction({
+      until,
+      now,
+      visible: document.visibilityState === 'visible',
+      alreadySignaled: announced.current,
+      pushArmed: restAlarmIsArmed(until),
+      leftForeground: leftForeground.current,
+    });
+    if (action === 'wait' || announced.current) return;
     announced.current = true;
-    playRestCompleteCue();
-  }, [until, seconds]);
+    if (action === 'play') {
+      playRestCompleteCue();
+      void cancelRestAlarm();
+      return;
+    }
+    // The page is open, so a push would only duplicate the chime or be dropped.
+    if (document.visibilityState === 'visible') void cancelRestAlarm();
+  }, [until, now]);
   if (!until) return null;
   return (
     <div className="focus-rest" role="timer" aria-live="polite">

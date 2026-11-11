@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { authenticate, login, logout } from './auth';
 import { database, readNotebook, writeOperation } from './postgres';
 import { validateAction, type Operation } from '../lib/operations';
+import { handleRestPush, startRestPush } from './rest-push';
 const root = fileURLToPath(new URL('../client', import.meta.url));
 function json(res: ServerResponse, value: unknown, status = 200) {
   res.writeHead(status, {
@@ -138,6 +139,7 @@ const server = createServer(async (req, res) => {
         json(res, { ok: true });
         return;
       }
+      if (await handleRestPush(req, res, user, url)) return;
       json(res, { error: 'Not found' }, 404);
       return;
     }
@@ -253,11 +255,14 @@ const server = createServer(async (req, res) => {
 server.listen(Number(process.env.PORT) || 4173, '0.0.0.0', () =>
   console.log(`Gym Notebook listening on ${Number(process.env.PORT) || 4173}`),
 );
-const stop = () =>
+const stopRestPush = startRestPush();
+const stop = () => {
+  stopRestPush();
   server.close(() => {
     void database()
       .end()
       .finally(() => process.exit(0));
   });
+};
 process.on('SIGTERM', stop);
 process.on('SIGINT', stop);

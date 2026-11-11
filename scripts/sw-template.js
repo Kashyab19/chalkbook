@@ -111,6 +111,58 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Rest-end push. A visible window plays the in-app chime, so it must not also
+// notify. iOS ignores vibrate and uses the system notification sound, which
+// follows the silent switch and Focus. Match lib/rest-alarm restPushShouldNotify.
+self.addEventListener('push', (event) => {
+  event.waitUntil(
+    (async () => {
+      let payload = {};
+      try {
+        payload = event.data ? event.data.json() : {};
+      } catch {
+        payload = {};
+      }
+      const windows = await self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true,
+      });
+      if (windows.some((client) => client.visibilityState === 'visible')) return;
+      const title = typeof payload.title === 'string' ? payload.title : 'Rest done';
+      const body =
+        typeof payload.body === 'string' ? payload.body : 'Time for the next set.';
+      const vibrate = Array.isArray(payload.vibrate)
+        ? payload.vibrate.filter((value) => Number.isFinite(value)).slice(0, 8)
+        : [50, 80, 50, 80, 90];
+      await self.registration.showNotification(title, {
+        body,
+        tag: 'rest-complete',
+        renotify: true,
+        vibrate,
+        data: { url: '/' },
+      });
+    })(),
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true,
+      });
+      const existing = windows.find((client) => typeof client.focus === 'function');
+      if (existing) {
+        await existing.focus();
+        return;
+      }
+      if (self.clients.openWindow) await self.clients.openWindow('/');
+    })(),
+  );
+});
+
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (

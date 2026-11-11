@@ -26,6 +26,8 @@ for (const file of [
   'lib/ordered-background.ts',
   'lib/sync-flush.ts',
   'lib/rest-cue.ts',
+  'lib/rest-alarm.ts',
+  'lib/rest-push.ts',
   'tests/operations.test.ts',
   'tests/offline.test.ts',
   'tests/workout-sets.test.ts',
@@ -33,6 +35,7 @@ for (const file of [
   'tests/exercise-catalog.test.ts',
   'tests/hot-path-latency.test.ts',
   'tests/rest-cue.test.ts',
+  'tests/rest-alarm.test.ts',
 ]) {
   const source = rewrite(await readFile(file, 'utf8'));
   await writeFile(
@@ -56,8 +59,10 @@ const result = spawnSync(
     join(dir, 'tests/exercise-catalog.test.js'),
     join(dir, 'tests/hot-path-latency.test.js'),
     join(dir, 'tests/rest-cue.test.js'),
+    join(dir, 'tests/rest-alarm.test.js'),
     'tests/shell-assets.test.mjs',
     'tests/shell-cache.test.mjs',
+    'tests/rest-push-sw.test.mjs',
     'tests/notebook-sql.test.mjs',
   ],
   { stdio: 'inherit' },

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   REST_COMPLETE_VIBRATION,
+  REST_CUE_GAIN,
   REST_CUE_SAMPLE_RATE,
   createRestCue,
   renderRestCompletePcm,
@@ -45,24 +46,34 @@ void test('the cue fires once when rest reaches zero and not when it is skipped'
   );
 });
 
-void test('the alarm is a short loud beep pattern generated in the app', () => {
+void test('the alarm is a firm sine chime generated in the app', () => {
   const pcm = renderRestCompletePcm();
   const duration = pcm.length / REST_CUE_SAMPLE_RATE;
   assert.ok(duration >= 0.7 && duration <= 1.2, `duration ${duration}`);
+  assert.ok(REST_CUE_GAIN >= 0.4 && REST_CUE_GAIN <= 0.65);
 
-  const at = (seconds: number) => pcm[Math.floor(seconds * REST_CUE_SAMPLE_RATE)] ?? 0;
-  assert.ok(Math.abs(at(0.08)) > 20_000, 'first beep is loud');
-  assert.ok(Math.abs(at(0.32)) > 20_000, 'second beep is loud');
-  assert.ok(Math.abs(at(0.66)) > 20_000, 'final beep is loud');
-  assert.ok(Math.abs(at(0.2)) < 200, 'beeps are separated by silence');
+  const rms = (startSec: number, endSec: number) => {
+    const start = Math.floor(startSec * REST_CUE_SAMPLE_RATE);
+    const end = Math.floor(endSec * REST_CUE_SAMPLE_RATE);
+    let sum = 0;
+    for (let index = start; index < end; index++) sum += (pcm[index] ?? 0) ** 2;
+    return Math.sqrt(sum / (end - start));
+  };
+  const fullScale = Math.round(REST_CUE_GAIN * 32767);
+  const sineRms = fullScale / Math.SQRT2;
+  assert.ok(rms(0.05, 0.14) > sineRms * 0.75, 'first tone is firm');
+  assert.ok(rms(0.37, 0.46) > sineRms * 0.75, 'second tone is firm');
+  assert.ok(rms(0.7, 0.82) > sineRms * 0.75, 'final tone is firm');
+  assert.ok(rms(0.2, 0.28) < 200, 'tones are separated by silence');
+  assert.ok(Math.max(...pcm.map((sample) => Math.abs(sample))) <= fullScale);
 
-  const beepStart = Math.floor(0.04 * REST_CUE_SAMPLE_RATE);
-  const beepEnd = Math.floor(0.12 * REST_CUE_SAMPLE_RATE);
+  const beepStart = Math.floor(0.05 * REST_CUE_SAMPLE_RATE);
+  const beepEnd = Math.floor(0.14 * REST_CUE_SAMPLE_RATE);
   let extreme = 0;
   for (let index = beepStart; index < beepEnd; index++) {
-    if (Math.abs(pcm[index] ?? 0) > 20_000) extreme++;
+    if (Math.abs(pcm[index] ?? 0) > fullScale * 0.9) extreme++;
   }
-  assert.ok(extreme / (beepEnd - beepStart) > 0.8, 'the tone is a square wave, not a soft sine');
+  assert.ok(extreme / (beepEnd - beepStart) < 0.4, 'the tone is a sine, not a square wave');
 
   const bytes = restCompleteWavBytes();
   assert.equal(Buffer.from(bytes.subarray(0, 4)).toString('ascii'), 'RIFF');
@@ -188,8 +199,10 @@ void test('rest completion vibrates where it can and plays the alarm aloud', asy
   cue.playComplete();
 
   assert.deepEqual(patterns, [[...REST_COMPLETE_VIBRATION]]);
-  assert.equal(REST_COMPLETE_VIBRATION.length, 5);
-  assert.ok(Math.max(...REST_COMPLETE_VIBRATION) >= 300);
+  assert.deepEqual(REST_COMPLETE_VIBRATION, [50, 80, 50, 80, 90]);
+  const pulses = REST_COMPLETE_VIBRATION.filter((_, index) => index % 2 === 0);
+  assert.ok(Math.max(...pulses) <= 100);
+  assert.ok(Math.min(...pulses) >= 40);
   assert.equal(audios[0]?.muted, false);
   assert.equal(audios[0]?.volume, 1);
   assert.equal(audios[0]?.paused, false);
@@ -221,8 +234,9 @@ void test('vibration is optional and a blocked element falls back to the generat
   assert.equal(audios[0]?.volume, 1);
   assert.equal(tones.length, 3);
   assert.equal(webAudio.oscillators.length, 3);
-  assert.ok(webAudio.oscillators.every((osc) => osc.type === 'square'));
-  assert.ok(webAudio.gains.some((value) => value >= 0.7));
+  assert.ok(webAudio.oscillators.every((osc) => osc.type === 'sine'));
+  assert.ok(webAudio.gains.includes(REST_CUE_GAIN));
+  assert.ok(webAudio.gains.every((value) => value <= REST_CUE_GAIN));
 });
 
 void test('a late unlock does not pause an alarm that already started', async () => {
@@ -252,18 +266,19 @@ void test('a late unlock does not pause an alarm that already started', async ()
   assert.equal(audios[0]?.muted, false);
 });
 
-void test('the fallback tone is three strong square beeps', () => {
+void test('the fallback tone is three softer sine tones', () => {
   const webAudio = fakeWebAudio();
   scheduleRestCompleteTone(webAudio);
   assert.equal(webAudio.oscillators.length, 3);
   assert.deepEqual(
     webAudio.oscillators.map((osc) => osc.type),
-    ['square', 'square', 'square'],
+    ['sine', 'sine', 'sine'],
   );
   assert.ok(webAudio.oscillators.every((osc) => osc.stop - osc.start >= 0.14));
   assert.equal(webAudio.oscillators[0]?.start, webAudio.currentTime);
   assert.ok(webAudio.oscillators[2]!.stop - webAudio.oscillators[1]!.stop >= 0.1);
-  assert.ok(webAudio.gains.some((value) => value >= 0.7));
+  assert.ok(webAudio.gains.includes(REST_CUE_GAIN));
+  assert.ok(REST_CUE_GAIN < 0.7);
 });
 
 function fakeWebAudio(onSchedule?: () => void): RestCueWebAudio & {

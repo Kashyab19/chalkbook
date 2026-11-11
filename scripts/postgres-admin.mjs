@@ -1,6 +1,6 @@
 // Run explicitly against the intended database. Never print DATABASE_URL.
 import { Pool } from 'pg';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { randomUUID, randomBytes, scryptSync, createHash } from 'node:crypto';
 import ts from 'typescript';
 import { checkServerIdentity } from 'node:tls';
@@ -33,22 +33,28 @@ try {
       await client.query(
         'CREATE TABLE IF NOT EXISTS infrastructure.schema_migrations (version text CONSTRAINT pk_schema_migrations PRIMARY KEY, checksum text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now())',
       );
-      const sql = await readFile('db/postgres/001_notebook.sql', 'utf8');
-      const checksum = createHash('sha256').update(sql).digest('hex');
-      const applied = await client.query(
-        'SELECT checksum FROM infrastructure.schema_migrations WHERE version=$1',
-        ['001_notebook'],
-      );
-      if (applied.rowCount) {
-        if (applied.rows[0].checksum !== checksum)
-          throw Error(
-            'Applied migration checksum mismatch. Add a new migration instead of editing history.',
-          );
-      } else {
+      const files = (await readdir('db/postgres'))
+        .filter((name) => /^\d+_.*\.sql$/.test(name))
+        .sort();
+      for (const file of files) {
+        const version = file.replace(/\.sql$/, '');
+        const sql = await readFile(`db/postgres/${file}`, 'utf8');
+        const checksum = createHash('sha256').update(sql).digest('hex');
+        const applied = await client.query(
+          'SELECT checksum FROM infrastructure.schema_migrations WHERE version=$1',
+          [version],
+        );
+        if (applied.rowCount) {
+          if (applied.rows[0].checksum !== checksum)
+            throw Error(
+              `Applied migration checksum mismatch for ${version}. Add a new migration instead of editing history.`,
+            );
+          continue;
+        }
         await client.query(sql);
         await client.query(
           'INSERT INTO infrastructure.schema_migrations(version,checksum) VALUES($1,$2)',
-          ['001_notebook', checksum],
+          [version, checksum],
         );
       }
       await client.query('COMMIT');
