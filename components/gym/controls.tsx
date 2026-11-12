@@ -34,61 +34,6 @@ export function Picker({
     </Select>
   );
 }
-export function Stepper({
-  label,
-  value,
-  step,
-  max,
-  onChange,
-  unit,
-}: {
-  label: string;
-  value: number | null;
-  step: number;
-  max: number;
-  onChange: (v: number | null) => void;
-  unit?: string;
-}) {
-  return (
-    <div
-      className="stepper"
-      data-caption={label.endsWith('reps') ? 'reps' : unit || 'weight'}
-    >
-      <button
-        aria-label={`Decrease ${label}`}
-        onClick={() =>
-          onChange(Math.max(0, Math.round(((value ?? 0) - step) * 10) / 10))
-        }
-      >
-        −{step}
-      </button>
-      <input
-        aria-label={label}
-        type="number"
-        inputMode={step === 1 ? 'numeric' : 'decimal'}
-        min="0"
-        max={max}
-        step="any"
-        placeholder="?"
-        value={value ?? ''}
-        onFocus={(e) => e.currentTarget.select()}
-        onChange={(e) => {
-          const n = e.target.value === '' ? null : Number(e.target.value);
-          if (n === null || (Number.isFinite(n) && n >= 0 && n <= max))
-            onChange(n);
-        }}
-      />
-      <button
-        aria-label={`Increase ${label}`}
-        onClick={() =>
-          onChange(Math.min(max, Math.round(((value ?? 0) + step) * 10) / 10))
-        }
-      >
-        +{step}
-      </button>
-    </div>
-  );
-}
 export function performance(entries: SetLog[], unit: string) {
   const valid = entries.filter(
     (x) => x.completed && !x.failed && x.weightKg !== null && x.reps !== null,

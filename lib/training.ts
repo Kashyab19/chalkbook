@@ -255,13 +255,3 @@ export function target(ex: Exercise, prev: SetLog[]) {
     }),
   };
 }
-export function movingAverage(entries: BodyEntry[], date: string, offset = 0) {
-  const end = new Date(date + 'T12:00:00Z').getTime() - offset * 86400000;
-  const rows = entries.filter((e) => {
-    const t = new Date(e.date + 'T12:00:00Z').getTime();
-    return t <= end && t > end - 7 * 86400000;
-  });
-  return rows.length
-    ? rows.reduce((a, e) => a + e.weightKg, 0) / rows.length
-    : null;
-}

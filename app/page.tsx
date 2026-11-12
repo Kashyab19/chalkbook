@@ -21,24 +21,17 @@ import {
   RiSettings3Line,
   RiScales3Line,
 } from '@remixicon/react';
-import { Picker } from '@/components/gym/controls';
 import { History } from '@/components/gym/history';
 import { FrictionInsights } from '@/components/gym/friction-insights';
 import { Program } from '@/components/gym/program';
 import { ExerciseArt } from '@/components/gym/exercise-art';
 import {
-  days,
   defaultProgram,
   dateKey,
-  dateLabel,
-  display,
   toKg,
-  previous,
   newSession,
   scheduledWorkout,
-  target,
   type Data,
-  type SetLog,
 } from '@/lib/training';
 import { useNotebook } from '@/hooks/use-notebook';
 import { OfflineRuntime } from '@/components/offline-runtime';
