@@ -4,5 +4,11 @@ set -e
 echo "Checking staged changes..."
 git diff --cached --check
 
-echo "Running linter..."
-pnpm exec oxlint
+files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|tsx|js|jsx|mjs)$' || true)
+if [ -n "$files" ]; then
+  echo "Running linter on staged files..."
+  # shellcheck disable=SC2086
+  pnpm exec oxlint $files
+else
+  echo "No staged JS/TS files to lint."
+fi

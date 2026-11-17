@@ -3,6 +3,14 @@ import { useState } from 'react';
 import { CalendarDays, ArrowRight } from 'lucide-react';
 import { Picker, Chart, performance } from './controls';
 import { exerciseHistoryLabel } from '@/lib/skip-exercise';
+import {
+  bestWeightDelta,
+  compareProgramPeriods,
+  formatBestSet,
+  formatSigned,
+  formatVolume,
+  volumeDelta,
+} from '@/lib/history-period';
 import { dateLabel, display, type Data, type Session } from '@/lib/training';
 import { ExerciseArt } from './exercise-art';
 export function History({
@@ -30,7 +38,15 @@ export function History({
       ].map((e) => [e.id, { value: e.id, label: e.name }]),
     ).values(),
   );
-  const now = Date.now();
+  const [now] = useState(() => Date.now());
+  const rangeDays = range === 'all' ? null : Number(range);
+  const comparisons = compareProgramPeriods(
+    data.program,
+    data.sessions,
+    unit,
+    now,
+    rangeDays,
+  );
   const meaningfulSessions = data.sessions.filter((s) =>
     s.exercises.some((e) => e.entries.some((entry) => entry.completed)),
   );
@@ -54,23 +70,6 @@ export function History({
     }).length;
   });
   const activityMax = Math.max(1, ...activity);
-  const best = (name: string) =>
-    data.sessions
-      .flatMap((s) =>
-        s.exercises
-          .filter((e) => e.name.toLowerCase().includes(name))
-          .flatMap((e) =>
-            e.entries
-              .filter(
-                (v) => v.completed && v.weightKg !== null && v.reps !== null,
-              )
-              .map((v) => ({
-                weight: display(v.weightKg!, unit),
-                reps: v.reps!,
-              })),
-          ),
-      )
-      .sort((a, b) => b.weight - a.weight || b.reps - a.reps)[0];
   const progression = filtered
     .filter((s) =>
       s.exercises.some(
@@ -108,44 +107,110 @@ export function History({
       },
     ];
   });
+  const rangeLabel =
+    range === 'all'
+      ? 'All time'
+      : range === '30'
+        ? 'Last 30 days vs prior 30'
+        : 'Last 90 days vs prior 90';
   return (
     <section className="app-section history-page">
       <p className="eyebrow">YOUR TRAINING RECORD</p>
       <h1>History</h1>
-      <div className="history-summary-grid">
-        {[
-          ['Bench Press', 'bench'],
-          ['Back Squat', 'squat'],
-          ['Deadlift', 'deadlift'],
-        ].map(([label, key]) => {
-          const value = best(key);
-          return (
-            <article className="paper history-stat" key={key}>
-              <ExerciseArt name={label} className="history-stat-art" />
-              <span>{label}</span>
-              <strong>
-                {value ? `${value.weight} ${unit} × ${value.reps}` : '—'}
-              </strong>
-            </article>
-          );
-        })}
+      <div className="history-range" aria-label="History range">
+        {[['30', '30 days'], ['90', '90 days'], ['all', 'All time']].map(([value, label]) => (
+          <button key={value} aria-pressed={range === value} onClick={() => setRange(value)}>{label}</button>
+        ))}
+      </div>
+      <div className="history-compare paper">
+        <div className="history-compare-heading">
+          <div>
+            <strong>Period comparison</strong>
+            <span>{rangeLabel}</span>
+          </div>
+        </div>
+        <div className="history-compare-list">
+          {comparisons.map((row) => {
+            const weightDelta = row.prior
+              ? bestWeightDelta(row.current.best, row.prior.best)
+              : null;
+            const volDelta = row.prior
+              ? volumeDelta(row.current.volume, row.prior.volume)
+              : null;
+            return (
+              <article className="history-compare-row" key={row.id}>
+                <button
+                  type="button"
+                  className="history-compare-exercise"
+                  onClick={() => setExercise(row.id)}
+                >
+                  <ExerciseArt name={row.name} className="history-stat-art" />
+                  <span>{row.name}</span>
+                </button>
+                <dl className="history-compare-metrics">
+                  <div>
+                    <dt>Best set</dt>
+                    <dd>
+                      <strong>{formatBestSet(row.current.best, unit)}</strong>
+                      {row.prior && (
+                        <small>
+                          was {formatBestSet(row.prior.best, unit)}
+                          <em data-delta={weightDelta === null ? 'flat' : weightDelta > 0 ? 'up' : weightDelta < 0 ? 'down' : 'flat'}>
+                            {formatSigned(weightDelta, unit)}
+                          </em>
+                        </small>
+                      )}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Volume</dt>
+                    <dd>
+                      <strong>{formatVolume(row.current.volume, unit)}</strong>
+                      {row.prior && (
+                        <small>
+                          was {formatVolume(row.prior.volume, unit)}
+                          <em data-delta={volDelta === null ? 'flat' : volDelta > 0 ? 'up' : volDelta < 0 ? 'down' : 'flat'}>
+                            {formatSigned(volDelta, unit)}
+                          </em>
+                        </small>
+                      )}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Sets</dt>
+                    <dd>
+                      <strong>
+                        {row.current.setCount
+                          ? `${row.current.setCount} in ${row.current.sessionCount} session${row.current.sessionCount === 1 ? '' : 's'}`
+                          : '—'}
+                      </strong>
+                      {row.prior && (
+                        <small>
+                          was{' '}
+                          {row.prior.setCount
+                            ? `${row.prior.setCount} in ${row.prior.sessionCount}`
+                            : '—'}
+                        </small>
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+              </article>
+            );
+          })}
+        </div>
       </div>
       <div className="history-periods paper">
         <div className="history-activity-heading">
           <div><strong>Training rhythm</strong><span>Your completed workouts over the last 8 weeks</span></div>
           <b>{recent(7).length}<small> this week</small></b>
         </div>
-        <div className="history-activity-chart" role="img" aria-label={`Weekly workouts for the last eight weeks: ${activity.join(', ')}`}>
+        <figure className="history-activity-chart" aria-label={`Weekly workouts for the last eight weeks: ${activity.join(', ')}`}>
           {activity.map((count, index) => (
             <div key={index}><span style={{ height: `${Math.max(8, (count / activityMax) * 100)}%` }} /><small>{index === 7 ? 'Now' : `${7 - index}w`}</small></div>
           ))}
-        </div>
+        </figure>
         <p>{recent(30).length} workouts in the last 30 days</p>
-      </div>
-      <div className="history-range" aria-label="History range">
-        {[['30', '30 days'], ['90', '90 days'], ['all', 'All time']].map(([value, label]) => (
-          <button key={value} aria-pressed={range === value} onClick={() => setRange(value)}>{label}</button>
-        ))}
       </div>
       <details className="history-filters">
         <summary>Filter history</summary>
